@@ -1,0 +1,9 @@
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 16px;
+}
+
+.status {
+  color: #555;
+}
