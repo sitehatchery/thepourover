@@ -17,6 +17,19 @@ A small customer data platform that brings newsletter subscribers, website visit
 | `POST /webhooks/app` | Signed webhook; duplicates, out-of-order events, anonymous-then-login stitching and unknown users all handled. **App Events** has a form that sends through the real webhook and a live feed of every call |
 | AI assistant without PII | **Assistant**: plain-English questions answered with tools that return aggregates only, plus a "What the AI saw" panel |
 
+### Screenshots
+
+The data shown is the assessment's sample data.
+
+| | |
+|---|---|
+| ![Setup: Load Data from Google Drive with the import result and history](docs/screenshots/setup-load-data.png) | ![A subscriber profile with segments, site visits and app activity](docs/screenshots/profile.png) |
+| **Setup:** a Google Drive import, with per-file counts and the import history | **Lookup:** one person's newsletter, web and app activity, and their segments |
+| ![App Events: an event sent through the webhook, with each processing step](docs/screenshots/app-events.png) | ![Subscribers filtered by three segments](docs/screenshots/segment-builder.png) |
+| **Webhook:** a login sent through the real webhook attaches 4 earlier anonymous events | **Segments as filters:** Engaged readers, Multi-channel readers and Signed up from Podcast combined |
+| ![The assistant answering which pages new subscribers hit first](docs/screenshots/assistant-pii-panel.png) | |
+| **Assistant:** an answer with the definition it used and a table; "What the AI saw" shows the exact requests | |
+
 Beyond the brief: Google Drive import, token and API-key auth, CSV export on every list, the in-app API guide, an admin console, the live webhook feed, request logging without personal data, and tests with CI.
 
 ## Architecture
