@@ -1,10 +1,16 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import ActivityDialog from './ActivityDialog'
+import ProfileSearch from './ProfileSearch'
 import './Layout.css'
 
 // Pages appear here as they're built.
-const NAV = [{ to: '/subscribers', label: 'Subscribers' }]
+const NAV = [
+  { to: '/subscribers', label: 'Subscribers' },
+  { to: '/web-events', label: 'Web Events' },
+  { to: '/app-events', label: 'App Events' },
+]
 
 export function BrandMark({ size = 34 }: { size?: number }) {
   return <span className="brand-mark" style={{ width: size, height: size }} aria-hidden="true" />
@@ -25,6 +31,8 @@ export default function Layout() {
               <span className="brand-title">Mini Subscriber Data Platform</span>
             </span>
           </NavLink>
+
+          <ProfileSearch />
 
           <button
             className="menu-toggle btn btn-ghost"
@@ -56,6 +64,8 @@ export default function Layout() {
       <main className="page">
         <Outlet />
       </main>
+
+      <ActivityDialog />
 
       <footer className="site-footer">
         Prepared by Jason Cox for The Pour Over <span aria-hidden="true">|</span> October 2026{' '}

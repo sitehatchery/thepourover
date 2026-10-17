@@ -6,7 +6,9 @@ import { useAuth } from './auth/useAuth'
 import Layout from './components/Layout'
 import { setToday } from './lib/format'
 import LoginPage from './pages/LoginPage'
+import AppEventsPage from './pages/AppEventsPage'
 import SubscribersPage from './pages/SubscribersPage'
+import WebEventsPage from './pages/WebEventsPage'
 
 function RequireAuth() {
   const { user, checking } = useAuth()
@@ -32,6 +34,8 @@ export default function App() {
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route path="/subscribers" element={<SubscribersPage />} />
+              <Route path="/web-events" element={<WebEventsPage />} />
+              <Route path="/app-events" element={<AppEventsPage />} />
               <Route path="*" element={<Navigate to="/subscribers" replace />} />
             </Route>
           </Route>

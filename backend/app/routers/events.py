@@ -74,10 +74,13 @@ def list_app_events(
     email: str | None = Query(None, max_length=64, description="Part of an email address"),
     device_id: str | None = Query(None, max_length=64),
     segment_id: list[str] = Query(default=[], max_length=10, description="Segment id or slug; repeat to require several"),
+    profile_id: str | None = Query(None, max_length=40, description="Only this person's events"),
     session: Session = Depends(get_session),
 ):
     """All app events, newest first by default. Sortable by timestamp, event, email, user_id."""
     stmt = _app_events_base().where(*date_range_filter(AppEvent.timestamp, date_from, date_to, today))
+    if profile_id:
+        stmt = stmt.where(_app_events_of(session, profile_id))
     if event:
         stmt = stmt.where(AppEvent.event == event)
     if anonymous:
@@ -93,13 +96,29 @@ def list_app_events(
     return _app_events_response(session, stmt, params)
 
 
+@router.get("/app_events/suggest")
+def suggest_ids(
+    field: Literal["user_id", "device_id"],
+    q: str = Query("", max_length=64),
+    session: Session = Depends(get_session),
+) -> list[str]:
+    """Up to 20 known user or device ids starting with `q`, for autocomplete on the App Events form."""
+    column = AppUser.app_user_id if field == "user_id" else AppEvent.device_id
+    stmt = select(column).distinct().order_by(column).limit(20)
+    if q.strip():
+        stmt = stmt.where(column.startswith(q.strip(), autoescape=True))
+    return list(session.scalars(stmt))
+
+
 @router.get("/profiles/{profile_id}/app_events")
 def profile_app_events(profile_id: str, params: ListParams = Depends(list_params), session: Session = Depends(get_session)):
     """One person's app events, including anonymous events stitched to them at login."""
-    profile = resolve_profile(session, profile_id)
-    user_ids = profile.app_user_ids
-    stmt = _app_events_base().where(AppEvent.app_user_id.in_(user_ids) if user_ids else false())
-    return _app_events_response(session, stmt, params)
+    return _app_events_response(session, _app_events_base().where(_app_events_of(session, profile_id)), params)
+
+
+def _app_events_of(session: Session, profile_id: str):
+    user_ids = resolve_profile(session, profile_id).app_user_ids
+    return AppEvent.app_user_id.in_(user_ids) if user_ids else false()
 
 
 # ---- web events ------------------------------------------------------------------------------------
@@ -144,10 +163,13 @@ def list_web_events(
     email: str | None = Query(None, max_length=64, description="Part of an email address"),
     page_path: str | None = Query(None, max_length=255, description="Exact page path, e.g. /subscribe"),
     segment_id: list[str] = Query(default=[], max_length=10, description="Segment id or slug; repeat to require several"),
+    profile_id: str | None = Query(None, max_length=40, description="Only this person's events"),
     session: Session = Depends(get_session),
 ):
     """All web events, newest first by default. Sortable by timestamp, page, utm_source, email."""
     stmt = select(WebEvent).where(*date_range_filter(WebEvent.timestamp, date_from, date_to, today))
+    if profile_id:
+        stmt = stmt.where(_web_events_of(session, profile_id))
     if utm_source:
         stmt = stmt.where(WebEvent.utm_source == utm_source.strip().lower())
     if term := normalize_search(email):
@@ -162,9 +184,11 @@ def list_web_events(
 @router.get("/profiles/{profile_id}/web_events")
 def profile_web_events(profile_id: str, params: ListParams = Depends(list_params), session: Session = Depends(get_session)):
     """One person's site visits: events captured with their email or backfilled from the same visitor."""
+    return _web_events_response(session, select(WebEvent).where(_web_events_of(session, profile_id)), params)
+
+
+def _web_events_of(session: Session, profile_id: str):
     profile = resolve_profile(session, profile_id)
     if profile.subscriber:
-        condition = WebEvent.subscriber_id == profile.subscriber.subscriber_id
-    else:
-        condition = WebEvent.email.in_(profile.emails) if profile.emails else false()
-    return _web_events_response(session, select(WebEvent).where(condition), params)
+        return WebEvent.subscriber_id == profile.subscriber.subscriber_id
+    return WebEvent.email.in_(profile.emails) if profile.emails else false()

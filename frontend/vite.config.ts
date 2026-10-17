@@ -7,9 +7,10 @@ const apiTarget = process.env.CDP_API_URL ?? 'http://127.0.0.1:8000'
 export default defineConfig({
   plugins: [react()],
   server: {
+    // Trailing slashes matter: page routes like /app-events must stay with the React app.
     proxy: {
-      '/app': apiTarget,
-      '/webhooks': apiTarget,
+      '/app/': apiTarget,
+      '/webhooks/': apiTarget,
     },
   },
 })

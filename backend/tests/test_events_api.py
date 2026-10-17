@@ -111,6 +111,26 @@ def test_subscriber_profile_events(client, auth, session, imported):
     assert all(i["profile_id"] == subscriber_profile for i in web["items"])
 
 
+def test_profile_filter_on_the_list_endpoints(client, auth, session, imported):
+    subscriber_id = session.scalar(select(Subscriber.subscriber_id).where(Subscriber.email == "julia.evans230@gmail.com"))
+    _send(client, auth, "evt_1", "u_2b6447a3")
+
+    listed = client.get(f"/app/web_events?profile_id=s_{subscriber_id}", headers=auth).json()
+    direct = client.get(f"/app/profiles/s_{subscriber_id}/web_events", headers=auth).json()
+    assert listed["total"] == direct["total"]
+    assert client.get(f"/app/app_events?profile_id=s_{subscriber_id}", headers=auth).json()["total"] == 1
+    assert client.get("/app/app_events?profile_id=s_999999", headers=auth).status_code == 404
+
+
+def test_id_suggestions(client, auth, imported):
+    _send(client, auth, "evt_1", None, device="d_phone_1")
+
+    users = client.get("/app/app_events/suggest?field=user_id&q=u_2b6", headers=auth).json()
+    assert "u_2b6447a3" in users and all(u.startswith("u_2b6") for u in users)
+    assert client.get("/app/app_events/suggest?field=device_id&q=d_ph", headers=auth).json() == ["d_phone_1"]
+    assert client.get("/app/app_events/suggest?field=email", headers=auth).status_code == 422
+
+
 def test_placeholder_profile_and_unknown_profile(client, auth, imported):
     _send(client, auth, "evt_1", "u_never_seen")
 

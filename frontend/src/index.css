@@ -148,6 +148,35 @@ select {
   color: var(--muted);
 }
 
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgb(242 129 125 / 45%);
+  text-underline-offset: 3px;
+}
+
+.link-btn:hover,
+.count-link:hover {
+  color: var(--coral-strong);
+  text-decoration-color: var(--coral);
+}
+
+.count-link {
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-color: rgb(242 129 125 / 45%);
+  text-underline-offset: 3px;
+}
+
+.cell-muted {
+  color: var(--muted);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
