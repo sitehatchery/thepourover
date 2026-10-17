@@ -17,6 +17,7 @@ from app.importer.service import run_import
 from app.importer.sources import LocalFolderSource
 from app.models import ApiClient, User
 from app.seeds import seed_reference_data
+from app.segments.catalog import seed_segments
 
 MIN_PASSWORD_LENGTH = 12
 
@@ -31,7 +32,8 @@ def init_db() -> None:
     command.upgrade(config, "head")
     with open_session() as session:
         seed_reference_data(session)
-    print("Database ready:", settings.resolved_database_url)
+        added = seed_segments(session)
+    print("Database ready:", settings.resolved_database_url, f"({added} catalog segments added)")
 
 
 def _read_password() -> str:

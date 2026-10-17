@@ -61,12 +61,13 @@ def test_sample_data_error_report(session, settings):
 def test_reimport_replaces_data_and_keeps_segments(session, settings):
     session.add(Segment(slug="kept", name="Kept", definition={"match": "all", "filters": []}))
     session.commit()
+    segments_before = count(session, Segment)
 
     import_folder(session, settings, settings.import_source_dir)
     import_folder(session, settings, settings.import_source_dir)
 
     assert count(session, Subscriber) == 2900
-    assert count(session, Segment) == 1
+    assert count(session, Segment) == segments_before
 
 
 # ---- rules on small files -----------------------------------------------------------------------

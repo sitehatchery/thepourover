@@ -84,6 +84,24 @@ How events are handled:
 
 Edge cases this doesn't cover: two people sharing one device without logging out between them, and a device that's reinstalled (new `device_id`) before logging in.
 
+## Segments
+
+A segment is a saved definition, evaluated live against the database every time it's used, so a new webhook event can change membership immediately.
+
+```json
+{"match": "all", "filters": [
+  {"field": "acquisition_source", "operator": "equals", "value": "Instagram"},
+  {"field": "last_open_date", "operator": "not_within_last_days", "value": 30}
+]}
+```
+
+- **People:** segments select people: every subscriber (`s_<id>`), plus app users who never subscribed (`u_<id>`, including webhook placeholders). Each person has computed fields: app account, app/web activity counts, active days, first web source, last seen.
+- **Schema:** `GET /app/segments/schema` lists every field, its operators and its allowed values (sources, pages and event types come from the data). The builder UI and the AI assistant use the same schema, and there is no email or other personal field in it.
+- **Safety:** definitions are validated against the schema, and field names map to an allow-list. Every value is a bound SQL parameter.
+- **Relative dates** count back from the configured today. "Not within the last N days" includes people with no date at all (e.g. never opened).
+- **Built-in catalog:** 22 segments are seeded by `init-db`, including the brief's "Instagram signups not opened in 30 days" (229 people in the sample). Seeding only adds missing segments, so edits are kept.
+- **Endpoints:** `GET/POST /app/segments`, `GET/PUT/DELETE /app/segments/{id or slug}`, `/members` (paged or `format=csv`), `/count`, and `POST /app/segments/preview`. `segment_id` (repeatable) filters `/app/subscribers`, `/app/app_events` and `/app/web_events`.
+
 ## Sample data result
 
 | File | Read | Loaded | Fixed | Rejected | Duplicates merged |

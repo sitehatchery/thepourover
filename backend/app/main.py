@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import auth, events, health, imports, webhooks
+from app.routers import auth, events, health, imports, segments, subscribers, webhooks
 
 app = FastAPI(
     title="The Pour Over Mini CDP",
@@ -14,5 +14,7 @@ API_PREFIX = "/app"
 app.include_router(health.router, prefix=API_PREFIX)
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(imports.router, prefix=API_PREFIX)
+app.include_router(subscribers.router)
+app.include_router(segments.router)
 app.include_router(events.router)
 app.include_router(webhooks.router)

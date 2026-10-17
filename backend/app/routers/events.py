@@ -14,6 +14,7 @@ from app.models import AppEvent, AppUser, Subscriber, WebEvent
 from app.queries.listing import ListParams, apply_sort, csv_response, date_range_filter, iso, join_pipe, list_params, paginate
 from app.queries.profiles import profile_id_for, resolve_profile
 from app.rules import normalize_search
+from app.segments.service import app_events_in_segments, web_events_in_segments
 
 router = APIRouter(prefix="/app", tags=["events"], dependencies=[Depends(require_auth)])
 
@@ -72,6 +73,7 @@ def list_app_events(
     anonymous: bool = Query(False, description="Only events with no user (device not logged in)"),
     email: str | None = Query(None, max_length=64, description="Part of an email address"),
     device_id: str | None = Query(None, max_length=64),
+    segment_id: list[str] = Query(default=[], max_length=10, description="Segment id or slug; repeat to require several"),
     session: Session = Depends(get_session),
 ):
     """All app events, newest first by default. Sortable by timestamp, event, email, user_id."""
@@ -86,6 +88,8 @@ def list_app_events(
         stmt = stmt.where(APP_EVENT_EMAIL.contains(term, autoescape=True))
     if device_id:
         stmt = stmt.where(AppEvent.device_id == device_id.strip())
+    if segment_id:
+        stmt = stmt.where(app_events_in_segments(session, segment_id))
     return _app_events_response(session, stmt, params)
 
 
@@ -138,7 +142,8 @@ def list_web_events(
     today: bool = False,
     utm_source: str | None = Query(None, max_length=32),
     email: str | None = Query(None, max_length=64, description="Part of an email address"),
-    page_path: str | None = Query(None, alias="page_path", max_length=255, description="Exact page path, e.g. /subscribe"),
+    page_path: str | None = Query(None, max_length=255, description="Exact page path, e.g. /subscribe"),
+    segment_id: list[str] = Query(default=[], max_length=10, description="Segment id or slug; repeat to require several"),
     session: Session = Depends(get_session),
 ):
     """All web events, newest first by default. Sortable by timestamp, page, utm_source, email."""
@@ -149,6 +154,8 @@ def list_web_events(
         stmt = stmt.where(WebEvent.email.contains(term, autoescape=True))
     if page_path:
         stmt = stmt.where(WebEvent.page == page_path.strip())
+    if segment_id:
+        stmt = stmt.where(web_events_in_segments(session, segment_id))
     return _web_events_response(session, stmt, params)
 
 
