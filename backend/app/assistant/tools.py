@@ -169,6 +169,7 @@ def _report_signups_by_source(session: Session, signup_from: str | None = None, 
     total = sum(n for _, n in rows)
     return {
         "title": "Signups by acquisition source",
+        "definition": "Newsletter subscribers counted by the source they signed up from.",
         "columns": ["source", "signups", "percent"],
         "rows": [[source or "(unknown)", n, _pct(n, total)] for source, n in rows],
         "total": total,
@@ -193,6 +194,7 @@ def _report_cold_by_source(session: Session, days_without_open: int = 30, signup
     out = sorted(([s or "(unknown)", total, int(c or 0), _pct(int(c or 0), total)] for s, total, c in rows), key=lambda r: -r[2])
     return {
         "title": f"Active subscribers with no open in {days_without_open} days, by source",
+        "definition": f"Gone cold = still subscribed, with no newsletter open in the last {days_without_open} days (including never opened).",
         "columns": ["source", "active_subscribers", "gone_cold", "percent_cold"],
         "rows": out,
         "total": sum(r[2] for r in out),
@@ -223,6 +225,7 @@ def _report_first_pages(session: Session, signed_up_within_days: int = 30, limit
     total = session.scalar(select(func.count()).select_from(first_visit).where(first_visit.c.n == 1)) or 0
     return {
         "title": f"First page visited by subscribers who signed up in the last {signed_up_within_days} days",
+        "definition": "Each subscriber's earliest linked website visit (any time; usually the visit where they signed up). Only subscribers with at least one linked visit are counted.",
         "columns": ["page", "subscribers", "percent"],
         "rows": [[page, n, _pct(n, total)] for page, n in rows],
         "total": total,
@@ -238,6 +241,7 @@ def _report_top_pages(session: Session, date_from: str | None = None, date_to: s
     rows = session.execute(stmt.group_by(WebEvent.page).order_by(func.count().desc()).limit(max(1, min(int(limit), 25)))).all()
     return {
         "title": "Most visited pages",
+        "definition": "All website visits, including anonymous ones, with distinct visitor ids per page.",
         "columns": ["page", "visits", "unique_visitors"],
         "rows": [list(r) for r in rows],
         "total": sum(r[1] for r in rows),
@@ -263,6 +267,7 @@ def _report_engagement_overview(session: Session, **_) -> dict:
     ]
     return {
         "title": "Subscriber engagement overview",
+        "definition": "Groups overlap except the four newsletter-open buckets, which add up to all subscribers.",
         "columns": ["group", "subscribers", "percent"],
         "rows": [[label, n, _pct(n, total)] for label, n in rows + extra],
         "total": total,
@@ -278,6 +283,7 @@ def _report_app_activity(session: Session, date_from: str | None = None, date_to
     rows = session.execute(stmt.group_by(AppEvent.event).order_by(func.count().desc())).all()
     return {
         "title": "App activity by event type",
+        "definition": "App events received through the webhook, with distinct logged-in users per type.",
         "columns": ["event", "events", "users"],
         "rows": [list(r) for r in rows],
         "total": sum(r[1] for r in rows),

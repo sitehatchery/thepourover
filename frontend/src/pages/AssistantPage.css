@@ -147,6 +147,11 @@
   color: var(--muted);
 }
 
+.att-definition {
+  display: block;
+  margin: -4px 0 8px;
+}
+
 .att-title {
   margin: 0 0 8px;
   font-weight: 500;

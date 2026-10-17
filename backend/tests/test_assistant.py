@@ -81,6 +81,8 @@ def test_every_tool_result_is_free_of_pii(session, imported):
     ]
     for output in outputs:
         assert find_pii(output) == [], output
+    for name in tools.REPORTS:
+        assert tools.run_report(session, name)["definition"], f"{name} needs a definition the model can quote"
 
 
 # ---- conversations --------------------------------------------------------------------------------------

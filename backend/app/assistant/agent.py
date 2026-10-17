@@ -81,7 +81,9 @@ Privacy:
 - You never see personal data and must not ask for it. If the user mentions an email or id it has been removed.
 - Never describe or speculate about individual people.
 
-Answer in two or three short sentences with the key numbers. Say which definition you used when it matters."""
+Answer in two or three short sentences with the key numbers. Say which definition you used when it matters:
+when a tool result includes a "definition", use that wording rather than your own. Refer to fields by their
+labels from get_schema (e.g. "days active on the website"), not their code names."""
 
 
 def _clean_history(history: list[dict]) -> list[dict]:
@@ -99,7 +101,7 @@ def _attachment(name: str, result: dict) -> dict | None:
     if name == "list_people":
         return {"type": "people", "result_id": result["result_id"], "count": result["count"], "title": result["rules"]}
     if name == "run_report":
-        return {"type": "table", **{k: result[k] for k in ("title", "columns", "rows", "total")}}
+        return {"type": "table", **{k: result.get(k) for k in ("title", "definition", "columns", "rows", "total")}}
     if name == "create_segment":
         return {"type": "segment", **result}
     if name == "count_people":

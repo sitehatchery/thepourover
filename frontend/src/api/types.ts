@@ -16,6 +16,7 @@ export type Person = {
   app_created_at: string | null
   app_event_count: number
   web_event_count: number
+  web_active_days: number
   last_seen: string | null
   first_utm_source: string | null
   is_subscriber: boolean

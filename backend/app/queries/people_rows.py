@@ -47,6 +47,7 @@ def person_row(row) -> dict:
         "app_created_at": iso(data["app_created_at"]),
         "app_event_count": data["app_event_count"],
         "web_event_count": data["web_event_count"],
+        "web_active_days": data["web_active_days"],
         "last_seen": iso(data["last_seen"]),
         "first_utm_source": data["first_utm_source"],
         "is_subscriber": bool(data["is_subscriber"]),

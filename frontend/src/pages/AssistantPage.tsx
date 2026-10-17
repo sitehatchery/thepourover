@@ -9,7 +9,7 @@ import './AssistantPage.css'
 type Attachment =
   | { type: 'count'; count: number; percent_of_everyone: number; rules: string }
   | { type: 'people'; result_id: string; count: number; title: string }
-  | { type: 'table'; title: string; columns: string[]; rows: (string | number)[][]; total: number }
+  | { type: 'table'; title: string; definition?: string; columns: string[]; rows: (string | number)[][]; total: number }
   | { type: 'segment'; slug: string; name: string; count: number; rules: string }
 
 type AuditStep =
@@ -20,6 +20,15 @@ type AuditStep =
 
 type Reply = { answer: string; attachments: Attachment[]; audit: AuditStep[]; redacted_question: boolean }
 type Message = { role: 'user'; content: string } | { role: 'assistant'; content: string; reply?: Reply; error?: boolean }
+
+const RANK_LABELS: Record<string, string> = {
+  last_seen: 'last seen',
+  last_open_date: 'last email open',
+  web_event_count: 'website visits',
+  web_active_days: 'days active on the website',
+  app_event_count: 'app events',
+  signup_date: 'signup date',
+}
 
 const SUGGESTIONS = [
   'How many Instagram signups went cold last month?',
@@ -163,6 +172,7 @@ function AttachmentView({ attachment }: { attachment: Attachment }) {
     return (
       <div className="att">
         <p className="att-title">{attachment.title}</p>
+        {attachment.definition && <p className="att-note att-definition">{attachment.definition}</p>}
         <div className="mini-table-wrap">
           <table className="mini-table">
             <thead>
@@ -192,12 +202,12 @@ function AttachmentView({ attachment }: { attachment: Attachment }) {
 }
 
 function PeopleList({ attachment }: { attachment: Extract<Attachment, { type: 'people' }> }) {
-  const [page, setPage] = useState<Page<Person> | null>(null)
+  const [page, setPage] = useState<(Page<Person> & { rank_by: string | null }) | null>(null)
   const [saved, setSaved] = useState<{ slug: string; name: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiGet<Page<Person>>(`/assistant/results/${attachment.result_id}?page_size=10`)
+    apiGet<Page<Person> & { rank_by: string | null }>(`/assistant/results/${attachment.result_id}?page_size=10`)
       .then(setPage)
       .catch((err: Error) => setError(err.message))
   }, [attachment.result_id])
@@ -228,6 +238,7 @@ function PeopleList({ attachment }: { attachment: Extract<Attachment, { type: 'p
                 <th>Source</th>
                 <th>Last open</th>
                 <th className="num">Web visits</th>
+                <th className="num">Active days</th>
                 <th className="num">App events</th>
               </tr>
             </thead>
@@ -240,6 +251,7 @@ function PeopleList({ attachment }: { attachment: Extract<Attachment, { type: 'p
                   <td>{p.acquisition_source}</td>
                   <td>{formatDate(p.last_open_date)}</td>
                   <td className="num">{formatNumber(p.web_event_count)}</td>
+                  <td className="num">{formatNumber(p.web_active_days)}</td>
                   <td className="num">{formatNumber(p.app_event_count)}</td>
                 </tr>
               ))}
@@ -255,7 +267,12 @@ function PeopleList({ attachment }: { attachment: Extract<Attachment, { type: 'p
             Save as segment
           </button>
         )}
-        {page && page.total > page.items.length && <span className="att-note">Showing the first {page.items.length}</span>}
+        {page && page.total > page.items.length && (
+          <span className="att-note">
+            Showing the first {page.items.length}
+            {page.rank_by && `, ranked by ${RANK_LABELS[page.rank_by] ?? page.rank_by}`}
+          </span>
+        )}
       </div>
     </div>
   )
