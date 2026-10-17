@@ -2,18 +2,16 @@
 
 import hashlib
 import secrets
+from datetime import timedelta
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db import get_session
 from app.models import ApiClient
 from app.rules import utcnow
 
 KEY_PREFIX = "cdp_"
-_bearer = HTTPBearer(auto_error=False)
+ROTATION_GRACE = timedelta(hours=24)
 
 
 def hash_key(key: str) -> str:
@@ -29,27 +27,29 @@ def create_api_key(session: Session, name: str) -> str:
     return key
 
 
+def rotate_api_key(session: Session, api_client_id: int) -> str:
+    """Issue a replacement key. The old key keeps working for ROTATION_GRACE so callers can switch over."""
+    old = session.get(ApiClient, api_client_id)
+    if old is None or old.revoked_at is not None:
+        raise LookupError("No active API key with that id")
+    grace_end = utcnow() + ROTATION_GRACE
+    old.expires_at = min(old.expires_at, grace_end) if old.expires_at else grace_end
+    session.commit()
+    return create_api_key(session, old.name)
+
+
+def revoke_api_key(session: Session, api_client_id: int) -> None:
+    client = session.get(ApiClient, api_client_id)
+    if client is None:
+        raise LookupError("No API key with that id")
+    client.revoked_at = client.revoked_at or utcnow()
+    session.commit()
+
+
 def find_active_client(session: Session, key: str) -> ApiClient | None:
     client = session.scalar(select(ApiClient).where(ApiClient.key_hash == hash_key(key)))
     if client is None or client.revoked_at is not None:
         return None
     if client.expires_at is not None and client.expires_at <= utcnow():
         return None
-    return client
-
-
-def require_api_client(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-    session: Session = Depends(get_session),
-) -> ApiClient:
-    """FastAPI dependency: the request must carry `Authorization: Bearer <api key>`."""
-    client = find_active_client(session, credentials.credentials) if credentials else None
-    if client is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing or invalid API key",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    client.last_used_at = utcnow()
-    session.commit()
     return client

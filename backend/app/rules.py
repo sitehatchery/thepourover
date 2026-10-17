@@ -19,6 +19,12 @@ def normalize_email(raw: str | None) -> str | None:
     return email
 
 
+def normalize_search(raw: str | None) -> str | None:
+    """Normalize a partial search term (e.g. part of an email) the same way stored values are normalized."""
+    value = (raw or "").strip().lower()
+    return value or None
+
+
 def parse_date(raw: str | None) -> date | None:
     """Parse an ISO date (YYYY-MM-DD). Returns None for blank values; raises ValueError for bad ones."""
     value = (raw or "").strip()

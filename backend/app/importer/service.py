@@ -11,6 +11,7 @@ from app.importer.load import load
 from app.importer.prepare import Issue, PreparedImport, Preparer
 from app.importer.sources import ImportSource, fetch
 from app.models import AcquisitionSource, ImportRun, SourceAlias
+from app.queries.listing import csv_safe
 from app.rules import utcnow
 
 STATUS_RUNNING = "running"
@@ -86,9 +87,4 @@ def _write_report(path: Path, issues: list[Issue]) -> None:
         writer = csv.writer(handle)
         writer.writerow(["severity", "file", "row", "field", "value", "reason"])
         for issue in issues:
-            writer.writerow([issue.severity, issue.file, issue.row or "", issue.field, _csv_safe(issue.value), issue.reason])
-
-
-def _csv_safe(value: str) -> str:
-    """Stop spreadsheet apps from running cell values as formulas."""
-    return "'" + value if value[:1] in ("=", "+", "-", "@") else value
+            writer.writerow([issue.severity, issue.file, issue.row or "", issue.field, csv_safe(issue.value), issue.reason])

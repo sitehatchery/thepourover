@@ -21,6 +21,22 @@ class Settings(BaseSettings):
     import_source_dir: Path = REPO_DIR / "data" / "sample"
     import_batch_size: int = 10
 
+    # Auth. Secrets have no defaults: the app refuses to issue tokens or accept webhooks without them.
+    jwt_secret: str = ""
+    access_token_minutes: int = 15
+    refresh_token_days: int = 7
+    cookie_secure: bool = True
+    login_attempts_per_minute: int = 10
+
+    # Webhook signing. Comma-separated so a secret can be rotated: the first signs, all verify.
+    webhook_secrets: str = ""
+    webhook_tolerance_seconds: int = 300
+    webhook_requests_per_minute: int = 600
+
+    @property
+    def webhook_secret_list(self) -> list[str]:
+        return [s.strip() for s in self.webhook_secrets.split(",") if s.strip()]
+
     @property
     def resolved_database_url(self) -> str:
         return self.database_url or f"sqlite:///{(self.data_dir / 'cdp.sqlite3').as_posix()}"

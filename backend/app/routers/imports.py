@@ -6,14 +6,14 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.api_keys import require_api_client
+from app.auth.deps import require_auth
 from app.config import get_settings
 from app.db import get_session
 from app.importer.service import run_import
 from app.importer.sources import LocalFolderSource
 from app.models import ImportRun
 
-router = APIRouter(prefix="/import", tags=["import"], dependencies=[Depends(require_api_client)])
+router = APIRouter(prefix="/import", tags=["import"], dependencies=[Depends(require_auth)])
 
 
 class ImportRunOut(BaseModel):
