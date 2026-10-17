@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth.deps import require_auth
 from app.db import get_session
 from app.models import AppEvent, AppUser, Subscriber, WebEvent
+from app.queries.export_notes import export_notes
 from app.queries.listing import ListParams, apply_sort, csv_response, date_range_filter, iso, join_pipe, list_params, paginate
 from app.queries.profiles import profile_id_for, resolve_profile
 from app.rules import normalize_search
@@ -58,7 +59,7 @@ def _app_events_response(session: Session, stmt: Select, params: ListParams):
         tiebreak=AppEvent.event_id,
     )
     if params.format == "csv":
-        return csv_response(stmt, APP_EVENT_COLUMNS, _app_event_row, "app_events")
+        return csv_response(stmt, APP_EVENT_COLUMNS, _app_event_row, "app_events", export_notes(params.request, session, "App events"))
     return paginate(session, stmt, params, _app_event_row)
 
 
@@ -149,7 +150,7 @@ def _web_events_response(session: Session, stmt: Select, params: ListParams):
         tiebreak=WebEvent.web_event_id,
     )
     if params.format == "csv":
-        return csv_response(stmt, WEB_EVENT_COLUMNS, _web_event_row, "web_events")
+        return csv_response(stmt, WEB_EVENT_COLUMNS, _web_event_row, "web_events", export_notes(params.request, session, "Web events"))
     return paginate(session, stmt, params, _web_event_row)
 
 

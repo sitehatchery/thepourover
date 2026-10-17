@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.deps import require_auth
-from app.config import get_settings
+from app.config import REPO_DIR, get_settings
 from app.db import get_session
 from app.importer.service import run_import
 from app.importer.sources import DriveFolderSource, LocalFolderSource
@@ -44,14 +44,22 @@ class ImportRunOut(BaseModel):
 
 @router.get("/source")
 def describe_source() -> dict:
-    """Where the next import reads from, and the files waiting there. The server path itself isn't exposed."""
+    """Where the next import reads from, and the files waiting there. Only the path inside the project is shown."""
     source = LocalFolderSource(get_settings().import_source_dir)
+    folder = _project_path(source.folder)
     try:
         names = source.list_files()
     except FileNotFoundError:
-        return {"kind": source.label, "folder": source.folder.name, "available": False, "files": []}
+        return {"kind": source.label, "folder": folder, "available": False, "files": []}
     files = [{"name": n, "size_bytes": (source.folder / n).stat().st_size} for n in names]
-    return {"kind": source.label, "folder": source.folder.name, "available": True, "files": files}
+    return {"kind": source.label, "folder": folder, "available": True, "files": files}
+
+def _project_path(folder: Path) -> str:
+    """e.g. "data/sample/" for the bundled samples; just the folder name if it lives outside the project."""
+    try:
+        return folder.resolve().relative_to(REPO_DIR.resolve()).as_posix() + "/"
+    except ValueError:
+        return folder.name + "/"
 
 
 @router.post("", response_model=ImportRunOut)

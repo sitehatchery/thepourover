@@ -10,7 +10,7 @@ import PersonFilterTag from '../components/PersonFilterTag'
 import SegmentPicker from '../components/SegmentPicker'
 import { dateRangeInvalid, formatDate, getToday, shortDate } from '../lib/format'
 import { useLookups, type Lookups } from '../lib/useLookups'
-import { PAGE_SIZE, useListQuery, type Changes } from '../lib/useListQuery'
+import { PAGE_SIZE, differsFromApplied, useListQuery, type Changes } from '../lib/useListQuery'
 import './TablePage.css'
 
 const FILTER_KEYS = ['date_from', 'date_to', 'today', 'utm_source', 'email', 'page_path', 'segment_id', 'profile_id'] as const
@@ -116,6 +116,7 @@ function WebEventFilters({ params, hasFilters, lookups, onApply, onClear }: Filt
   const [to, setTo] = useState(read('date_to'))
   const [segments, setSegments] = useState(params.getAll('segment_id'))
   const today = params.get('today') === 'true'
+  const changed = differsFromApplied({ email, utm_source: utm, page_path: page, date_from: from, date_to: to, segment_id: segments }, params)
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -158,7 +159,7 @@ function WebEventFilters({ params, hasFilters, lookups, onApply, onClear }: Filt
         >
           Today <span className="btn-note">{shortDate(getToday())}</span>
         </button>
-        <button type="submit" className="btn btn-primary" disabled={dateRangeInvalid(from, to)}>
+        <button type="submit" className="btn btn-primary" disabled={!changed || dateRangeInvalid(from, to)}>
           Apply filters
         </button>
         {hasFilters && (

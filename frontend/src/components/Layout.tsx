@@ -73,6 +73,11 @@ export default function Layout() {
       <footer className="site-footer">
         Prepared by Jason Cox for The Pour Over <span aria-hidden="true">|</span> October 2026{' '}
         <span aria-hidden="true">|</span> Full-stack Developer Pre-Employment Project
+        <span className="footer-links">
+          <a href="/app/docs" target="_blank" rel="noopener">
+            API documentation
+          </a>
+        </span>
       </footer>
     </div>
   )

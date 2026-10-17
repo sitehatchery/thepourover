@@ -10,6 +10,7 @@ from app.auth.deps import require_auth
 from app.config import get_settings
 from app.db import get_session
 from app.models import AppEvent, Segment, WebEvent
+from app.queries.export_notes import export_notes
 from app.queries.listing import ListParams, apply_sort, csv_response, iso, list_params, paginate
 from app.queries.people_rows import PEOPLE_COLUMNS, STATUS_LABELS, person_row, sort_columns
 from app.queries.profiles import resolve_profile
@@ -58,7 +59,7 @@ def list_subscribers(
 
     stmt = apply_sort(stmt, params, sort_columns(people), default="signup_date", tiebreak=people.c.profile_id)
     if params.format == "csv":
-        return csv_response(stmt, PEOPLE_COLUMNS, person_row, "subscribers")
+        return csv_response(stmt, PEOPLE_COLUMNS, person_row, "subscribers", export_notes(params.request, session, "Subscribers"))
     return paginate(session, stmt, params, person_row)
 
 

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth.deps import require_auth
 from app.db import get_session
 from app.models import SEGMENT_GROUP_APP_USERS, SEGMENT_GROUP_SUBSCRIBER, SEGMENT_GROUP_WEB_EVENTS, Segment
+from app.queries.export_notes import export_notes
 from app.queries.listing import ListParams, apply_sort, csv_response, iso, list_params, paginate
 from app.queries.people_rows import PEOPLE_COLUMNS, person_row, sort_columns
 from app.segments.engine import SegmentDefinition, describe, schema
@@ -118,5 +119,6 @@ def list_members(id_or_slug: str, params: ListParams = Depends(list_params), ses
     people, stmt = members(definition_of(segment))
     stmt = apply_sort(stmt, params, sort_columns(people), default="last_seen", tiebreak=people.c.profile_id)
     if params.format == "csv":
-        return csv_response(stmt, PEOPLE_COLUMNS, person_row, f"segment_{segment.slug}")
+        notes = export_notes(params.request, session, f"Segment {segment.name}", [f"Rules: {describe(definition_of(segment))}"])
+        return csv_response(stmt, PEOPLE_COLUMNS, person_row, f"segment_{segment.slug}", notes)
     return paginate(session, stmt, params, person_row)

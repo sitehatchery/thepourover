@@ -38,9 +38,9 @@ def test_import_source_lists_files_without_server_paths(client, auth):
     body = client.get("/app/import/source", headers=auth).json()
 
     assert body["kind"] == "local" and body["available"] is True
-    assert body["folder"] == "sample"
+    assert body["folder"] == "data/sample/"
     assert sorted(f["name"] for f in body["files"]) == ["app_users.csv", "subscribers.csv", "web_events.csv"]
-    assert "\\" not in str(body) and "/" not in body["folder"]
+    assert "\\" not in str(body) and ":" not in body["folder"]  # a project path, never the server path
 
 
 def test_revoked_and_expired_keys_are_rejected(client, session, api_key):

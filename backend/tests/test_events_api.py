@@ -60,7 +60,11 @@ def test_web_events_csv_export_has_every_matching_row(client, auth, imported):
 
     assert response.headers["content-type"].startswith("text/csv")
     assert 'filename="web_events_2026-09-28.csv"' in response.headers["content-disposition"]
-    rows = list(csv.DictReader(io.StringIO(response.text)))
+    lines = response.text.splitlines()
+    notes = [line for line in lines if line.startswith("#")]
+    assert notes[0] == "# The Pour Over Mini CDP: Web events"
+    assert "# Filters: Page: /about" in notes
+    rows = list(csv.DictReader(line for line in lines if not line.startswith("#")))
     assert len(rows) == 537  # all of them, not one page
 
 
@@ -70,6 +74,16 @@ def test_web_events_csv_export_has_every_matching_row(client, auth, imported):
 def _send(client, auth, event_id, user_id, device="d_1", ts="2026-09-28T10:00:00Z", kind="app_open"):
     payload = {"event_id": event_id, "event": kind, "user_id": user_id, "device_id": device, "timestamp": ts, "properties": {}}
     assert client.post("/app/app_events/send", json=payload, headers=auth).status_code == 200
+
+
+def test_csv_notes_name_segments_people_and_sort(client, auth, imported):
+    text = client.get("/app/subscribers?format=csv&segment_id=gone_cold&status=active&today=true&sort=email&order=asc", headers=auth).text
+    notes = [line for line in text.splitlines() if line.startswith("#")]
+
+    assert "# Filters: Status: active; Today only (2026-09-28); Segment: Gone cold" in notes
+    assert "# Sorted by: email (oldest/lowest first)" in notes
+    unfiltered = client.get("/app/subscribers?format=csv", headers=auth).text
+    assert "# Filters: none (everything)" in unfiltered.splitlines()
 
 
 def test_app_events_list_filters_and_email(client, auth, session, imported):

@@ -3,12 +3,12 @@
 import csv
 import io
 from collections.abc import Callable, Iterable, Iterator
+from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import Any
 
-from fastapi import HTTPException, Query
+from fastapi import HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
@@ -19,22 +19,25 @@ DEFAULT_PAGE_SIZE = 40
 MAX_PAGE_SIZE = 200
 
 
-class ListParams(BaseModel):
+@dataclass
+class ListParams:
     page: int
     page_size: int
     sort: str | None
     order: str
     format: str
+    request: Request | None = None  # lets CSV exports describe the filters that were applied
 
 
 def list_params(
+    request: Request,
     page: int = Query(1, ge=1),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     sort: str | None = Query(None, max_length=32),
     order: str = Query("desc", pattern="^(asc|desc)$"),
     format: str = Query("json", pattern="^(json|csv)$"),
 ) -> ListParams:
-    return ListParams(page=page, page_size=page_size, sort=sort, order=order, format=format)
+    return ListParams(page=page, page_size=page_size, sort=sort, order=order, format=format, request=request)
 
 
 def apply_sort(stmt: Select, params: ListParams, columns: dict[str, Any], default: str, tiebreak: Any) -> Select:
@@ -78,14 +81,19 @@ def csv_safe(value: Any) -> str:
     return "'" + text if text[:1] in ("=", "+", "-", "@") else text
 
 
-def csv_response(stmt: Select, columns: list[str], to_row: Callable[[Any], dict], name: str) -> StreamingResponse:
-    """Stream every matching row (not just one page) as CSV."""
+def csv_response(
+    stmt: Select, columns: list[str], to_row: Callable[[Any], dict], name: str, notes: list[str] | None = None
+) -> StreamingResponse:
+    """Stream every matching row (not just one page) as CSV. `notes` become `#` comment lines above the
+    header (what was exported and with which filters); spreadsheet and data tools skip or show them."""
 
     def generate() -> Iterator[str]:
         # The response streams after the endpoint returns, so it reads with its own session.
         with open_session() as session:
             buffer = io.StringIO()
             writer = csv.writer(buffer)
+            for note in notes or []:
+                writer.writerow([f"# {csv_safe(note)}"])
             writer.writerow(columns)
             for row in session.execute(stmt.execution_options(yield_per=500)):
                 data = to_row(row)

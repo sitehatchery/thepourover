@@ -62,7 +62,7 @@ def callback(state: str = "", code: str = "", error: str = "", session: Session 
     settings = get_settings()
     fallback = settings.app_origin_list[0]
     if error:
-        message = "Google sign-in was cancelled." if error == "access_denied" else f"Google sign-in failed ({error})."
+        message = "Google sign-in was canceled." if error == "access_denied" else f"Google sign-in failed ({error})."
         return RedirectResponse(f"{fallback}/setup?{urlencode({'google': 'error', 'message': message})}", status_code=303)
     try:
         return_to = google.finish(session, settings, code, state)

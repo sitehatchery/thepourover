@@ -18,7 +18,7 @@ type DriveStatus = {
 type SourceChoice = 'google_drive' | 'local'
 
 const ENTITY_LABELS: Record<string, string> = { subscribers: 'Subscribers', app_users: 'App users', web_events: 'Web events' }
-const SOURCE_LABELS: Record<string, string> = { google_drive: 'Google Drive', local: 'Drop folder' }
+const SOURCE_LABELS: Record<string, string> = { google_drive: 'Google Drive', local: 'Data folder' }
 
 function fileSize(bytes: number | null): string {
   if (bytes === null) return 'Google Sheet'
@@ -61,7 +61,7 @@ export default function SetupPage() {
     apiGet<ImportRun[]>('/import/runs?limit=8').then(setRuns).catch(() => setRuns([]))
   }, [reload])
 
-  // Default to Drive once it's connected, otherwise the drop folder.
+  // Default to Drive once it's connected, otherwise the data folder.
   const source: SourceChoice = choice ?? (drive?.connected ? 'google_drive' : 'local')
   const files = source === 'google_drive' ? (drive?.files ?? []) : (local?.files ?? [])
   const sourceReady = source === 'google_drive' ? Boolean(drive?.connected && !drive.error) : Boolean(local?.available)
@@ -79,7 +79,7 @@ export default function SetupPage() {
   }
 
   async function disconnectDrive() {
-    if (!window.confirm('Disconnect Google Drive? Imports will use the drop folder until you reconnect.')) return
+    if (!window.confirm('Disconnect Google Drive? Imports will use the data folder until you reconnect.')) return
     setBusy(true)
     try {
       await apiSend('POST', '/integrations/google/disconnect')
@@ -129,7 +129,7 @@ export default function SetupPage() {
         <div className="setup-card">
           <h2>Load data</h2>
           <p>
-            Imports every CSV in the chosen source. Files are recognised by their column headings, checked row by row,
+            Imports every CSV in the chosen source. Files are recognized by their column headings, checked row by row,
             cleaned (emails trimmed and lower-cased, sources mapped) and de-duplicated before anything is saved. Rows
             that can't be fixed are skipped and listed in a downloadable error report.
           </p>
@@ -183,9 +183,9 @@ export default function SetupPage() {
             <label className={source === 'local' ? 'source-option selected' : 'source-option'}>
               <input type="radio" name="source" checked={source === 'local'} onChange={() => setChoice('local')} />
               <span className="source-option-body">
-                <span className="source-option-title">Drop folder on the server</span>
+                <span className="source-option-title">Data folder on the server</span>
                 <span className="muted">
-                  Folder <code>{local?.folder ?? '…'}</code>
+                  <code>{local?.folder ?? '…'}</code>
                   {local && !local.available && ' (not found)'}
                 </span>
               </span>
@@ -212,7 +212,7 @@ export default function SetupPage() {
             disabled={running || !sourceReady || !files.length}
             onClick={() => confirmRef.current?.showModal()}
           >
-            {running ? 'Importing…' : '[Load Data]'}
+            {running ? 'Importing…' : 'Load Data'}
           </button>
           {error && (
             <p className="notice notice-error" role="alert">
@@ -221,10 +221,10 @@ export default function SetupPage() {
           )}
         </div>
 
-        <div className="setup-card" aria-live="polite">
-          <h2>Result</h2>
+        <div className={latest || running ? 'setup-card' : 'setup-card is-idle'} aria-live="polite">
+          <h2>Import result</h2>
           {running && <p className="muted">Reading, validating and loading the files…</p>}
-          {!running && !latest && <p className="muted">Run an import to see what was loaded, fixed and rejected.</p>}
+          {!running && !latest && <p className="muted">Load Data to see what was loaded, fixed and rejected.</p>}
           {!running && latest && <RunResult run={latest} onDownload={() => void downloadReport()} />}
         </div>
       </div>

@@ -125,6 +125,15 @@
   white-space: nowrap;
 }
 
+.footer-links {
+  display: block;
+  margin-top: 6px;
+}
+
+.footer-links a {
+  color: var(--coral-strong);
+}
+
 @media (max-width: 1180px) {
   .brand-title,
   .nav-username {
