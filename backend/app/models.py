@@ -166,3 +166,21 @@ class ImportRun(Base):
     file_stats: Mapped[dict] = mapped_column(JSON, default=dict)
     message: Mapped[str] = mapped_column(Text, default="")
     error_report_path: Mapped[str | None] = mapped_column(String(255))
+
+
+class WebhookCall(Base):
+    """One call to the webhook, kept for the live feed. Rejected calls keep the reason, never the payload."""
+
+    __tablename__ = "webhook_calls"
+
+    webhook_call_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    received_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    channel: Mapped[str] = mapped_column(String(16))  # "webhook" (external, signed) or "app" (App Events page)
+    outcome: Mapped[str] = mapped_column(String(16))  # stored, duplicate or rejected
+    http_status: Mapped[int] = mapped_column(SmallInteger)
+    event_id: Mapped[str | None] = mapped_column(String(64))
+    event: Mapped[str | None] = mapped_column(String(32))
+    app_user_id: Mapped[str | None] = mapped_column(String(32))
+    device_id: Mapped[str | None] = mapped_column(String(64))
+    steps: Mapped[list] = mapped_column(JSON, default=list)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)

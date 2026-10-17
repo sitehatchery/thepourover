@@ -175,3 +175,58 @@ def test_in_app_sender_requires_auth_and_uses_the_webhook(client, auth, session)
     assert response.status_code == 200
     assert "Signature verified" in response.json()["steps"]
     assert session.get(AppEvent, "evt_1") is not None
+
+
+# ---- call log (live feed) -----------------------------------------------------------------------
+
+
+def test_feed_logs_stored_duplicate_and_rejected_calls(client, auth, send_webhook):
+    send_webhook(event("evt_1", "u_new"))
+    send_webhook(event("evt_1", "u_new"))
+    send_webhook({**event("evt_2"), "unexpected": "jane@example.com"})
+    body = json.dumps(event("evt_3", "u_secret_user")).encode()
+    client.post("/app/webhooks/app", content=body, headers=sign(body, "wrong_secret"))
+
+    assert client.get("/app/webhook_calls").status_code == 401
+    calls = client.get("/app/webhook_calls", headers=auth).json()
+
+    assert [c["outcome"] for c in calls] == ["rejected", "rejected", "duplicate", "stored"]
+    assert [c["http_status"] for c in calls] == [401, 400, 200, 200]
+    stored = calls[-1]
+    assert stored["event_id"] == "evt_1" and stored["app_user_id"] == "u_new" and stored["channel"] == "webhook"
+    assert stored["steps"][0] == "Received" and stored["steps"][-1] == "Stored"
+
+
+def test_rejected_calls_keep_the_reason_not_the_payload(client, auth, send_webhook):
+    send_webhook({**event("evt_2"), "unexpected": "jane@example.com"})
+    body = json.dumps(event("evt_3", "u_secret_user")).encode()
+    client.post("/app/webhooks/app", content=body, headers=sign(body, "wrong_secret"))
+
+    calls = client.get("/app/webhook_calls", headers=auth).json()
+    text = json.dumps(calls)
+    for leaked in ("jane@example.com", "unexpected\"", "evt_2", "evt_3", "u_secret_user", "d_1"):
+        assert leaked not in text
+    assert calls[0]["steps"][-1].startswith("Rejected: ")
+    assert calls[1]["steps"][-1] == "Rejected: invalid unexpected field"
+
+
+def test_feed_polls_for_newer_calls_and_the_app_channel(client, auth, send_webhook):
+    send_webhook(event("evt_1"))
+    newest = client.get("/app/webhook_calls", headers=auth).json()[0]["webhook_call_id"]
+    assert client.get(f"/app/webhook_calls?after={newest}", headers=auth).json() == []
+
+    client.post("/app/app_events/send", json=event("evt_2"), headers=auth)
+    newer = client.get(f"/app/webhook_calls?after={newest}", headers=auth).json()
+    assert [(c["event_id"], c["channel"]) for c in newer] == [("evt_2", "app")]
+
+
+def test_call_log_keeps_the_most_recent_calls(session, monkeypatch):
+    from app.models import WebhookCall
+    from app.webhook import log
+
+    monkeypatch.setattr(log, "KEEP_CALLS", 3)
+    for _ in range(5):
+        log.record_call(session, "webhook", 401, ["Received", "Rejected: bad"], 1)
+
+    ids = session.scalars(select(WebhookCall.webhook_call_id).order_by(WebhookCall.webhook_call_id)).all()
+    assert ids == [3, 4, 5]

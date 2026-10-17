@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useState, type FormEvent } from 'react'
 import type { AppEventRow } from '../api/types'
 import AppEventSender from '../components/AppEventSender'
 import DataTable, { type Column } from '../components/DataTable'
@@ -9,6 +9,7 @@ import ListStates from '../components/ListStates'
 import Pagination from '../components/Pagination'
 import PersonFilterTag from '../components/PersonFilterTag'
 import SegmentPicker from '../components/SegmentPicker'
+import WebhookFeed from '../components/WebhookFeed'
 import { dateRangeInvalid, formatDate, getToday, shortDate } from '../lib/format'
 import { useLookups, type Lookups } from '../lib/useLookups'
 import { PAGE_SIZE, differsFromApplied, useListQuery, type Changes } from '../lib/useListQuery'
@@ -46,6 +47,7 @@ export default function AppEventsPage() {
   const list = useListQuery<AppEventRow>({ endpoint: '/app_events', filterKeys: FILTER_KEYS, defaultSort: 'timestamp', refreshKey })
   const lookups = useLookups()
   const profileId = list.params.get('profile_id')
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   return (
     <section className="table-page">
@@ -58,7 +60,8 @@ export default function AppEventsPage() {
         onExport={() => list.exportCsv('app_events.csv')}
       />
 
-      <AppEventSender onSent={() => setRefreshKey((k) => k + 1)} />
+      <AppEventSender onSent={refresh} />
+      <WebhookFeed onNewEvents={refresh} refreshKey={refreshKey} />
 
       <AppEventFilters
         key={list.appliedKey}
