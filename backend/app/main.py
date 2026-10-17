@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from app import observability
+from app.admin import mount_admin
 from app.routers import assistant, auth, events, health, imports, integrations, segments, subscribers, webhooks
 
 app = FastAPI(
@@ -20,3 +22,6 @@ app.include_router(events.router)
 app.include_router(webhooks.router)
 app.include_router(assistant.router)
 app.include_router(integrations.router)
+
+mount_admin(app)
+observability.install(app)

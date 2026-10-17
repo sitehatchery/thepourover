@@ -1,7 +1,13 @@
 # Rendered at start-up with envsubst (only ${PORT} is substituted).
+
+# $uri, not $request: query strings can carry emails (filters and searches), so they stay out of the log.
+log_format cdp_no_query '$remote_addr [$time_local] "$request_method $uri" $status $body_bytes_sent $request_time';
+
 server {
     listen ${PORT};
     server_name _;
+    # Set here, it replaces the stock http-level access log (which would include query strings).
+    access_log /dev/stdout cdp_no_query;
 
     root /srv/web;
     index index.html;
@@ -17,6 +23,13 @@ server {
     location /app/docs {
         include /etc/nginx/snippets/security-headers.conf;
         add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https://fastapi.tiangolo.com; frame-ancestors 'none'" always;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # The admin console (SQLAdmin) serves its own scripts and styles, some of them inline.
+    location /app/admin {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
         proxy_pass http://127.0.0.1:8000;
     }
 

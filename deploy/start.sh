@@ -24,8 +24,9 @@ fi
 
 envsubst '${PORT}' < /etc/nginx/templates/cdp.conf.template > /etc/nginx/conf.d/cdp.conf
 
-# Nginx is the only way in, so the forwarded client address it passes on is trusted.
-su cdp -s /bin/sh -c "exec uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips='*'" &
+# Nginx is the only way in, so the forwarded client address it passes on is trusted. Uvicorn's access log is
+# off because it prints query strings (which can hold emails); the app logs each request itself without them.
+su cdp -s /bin/sh -c "exec uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips='*' --no-access-log" &
 API_PID=$!
 nginx -g 'daemon off;' &
 NGINX_PID=$!
