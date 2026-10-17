@@ -102,6 +102,22 @@ A segment is a saved definition, evaluated live against the database every time 
 - **Built-in catalog:** 22 segments are seeded by `init-db`, including the brief's "Instagram signups not opened in 30 days" (229 people in the sample). Seeding only adds missing segments, so edits are kept.
 - **Endpoints:** `GET/POST /app/segments`, `GET/PUT/DELETE /app/segments/{id or slug}`, `/members` (paged or `format=csv`), `/count`, and `POST /app/segments/preview`. `segment_id` (repeatable) filters `/app/subscribers`, `/app/app_events` and `/app/web_events`.
 
+## AI assistant and PII
+
+The Assistant page answers plain-English questions ("How many Instagram signups went cold last month?", "Build me a list of our most engaged readers", "Which pages do new subscribers hit first?") with an answer, a table or a segment. It uses OpenAI with tool calling (`OPENAI_API_KEY`, model set by `CDP_OPENAI_MODEL`).
+
+**The model never sees personal data.** It's kept out in layers:
+
+1. **Tools return aggregates only** (`backend/app/assistant/tools.py`): counts, percentages, sources, pages, event types and segment rules. The model can't query the database or read rows.
+2. **Lists stay in the browser.** `list_people` gives the model a result id and a count. The browser, behind login, fetches the actual people from `GET /app/assistant/results/{id}`. That response never goes back to the model.
+3. **The question is redacted** before sending: emails and ids (`u_…`, `v_…`, `d_…`, `evt_…`, `s_…`) are removed.
+4. **A guard checks every outbound payload** (`backend/app/assistant/pii.py`). If anything looks like an email or one of our ids, the request is blocked, and a tool result like that is withheld. A bug in layer 1 fails closed instead of leaking.
+5. **Transparency:** every answer has a "What the AI saw" panel showing the exact messages sent and each tool result.
+
+Tests (`backend/tests/test_assistant.py`) run the brief's questions against a scripted model that records every request, and check that none of the ~6,000 emails and ids in the database appear anywhere in what was sent.
+
+Definitions the assistant uses: "went cold" = active, no open in 30 days (including never), signed up more than 30 days ago. "Engaged" = the Engaged readers segment (opened within 14 days and seen within 30). "Last month" = the calendar month before the configured today (August 2026).
+
 ## Sample data result
 
 | File | Read | Loaded | Fixed | Rejected | Duplicates merged |

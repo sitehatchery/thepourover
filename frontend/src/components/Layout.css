@@ -144,10 +144,10 @@
   }
 }
 
-@media (max-width: 760px) {
+/* Below 1100px the nav collapses behind the Menu button so the search keeps its width. */
+@media (max-width: 1100px) {
   .header-inner {
     flex-wrap: wrap;
-    padding: 10px 16px;
   }
 
   .menu-toggle {
@@ -172,6 +172,16 @@
     border-left: 0;
     border-top: 1px solid var(--line);
     justify-content: space-between;
+  }
+
+  .nav-username {
+    display: inline;
+  }
+}
+
+@media (max-width: 760px) {
+  .header-inner {
+    padding: 10px 16px;
   }
 
   .page {

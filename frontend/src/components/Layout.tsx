@@ -11,6 +11,7 @@ const NAV = [
   { to: '/web-events', label: 'Web Events' },
   { to: '/app-events', label: 'App Events' },
   { to: '/segments', label: 'Segments' },
+  { to: '/assistant', label: 'Assistant' },
   { to: '/setup', label: 'Setup' },
 ]
 

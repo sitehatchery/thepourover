@@ -4,6 +4,7 @@ from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +33,11 @@ class Settings(BaseSettings):
     webhook_secrets: str = ""
     webhook_tolerance_seconds: int = 300
     webhook_requests_per_minute: int = 600
+
+    # AI assistant. The key is read from CDP_OPENAI_API_KEY or the usual OPENAI_API_KEY.
+    openai_api_key: str = Field(default="", validation_alias=AliasChoices("CDP_OPENAI_API_KEY", "OPENAI_API_KEY"))
+    openai_model: str = "gpt-5-mini"
+    assistant_max_tool_rounds: int = 6
 
     @property
     def webhook_secret_list(self) -> list[str]:

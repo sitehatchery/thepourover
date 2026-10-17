@@ -7,6 +7,7 @@ import Layout from './components/Layout'
 import { setToday } from './lib/format'
 import LoginPage from './pages/LoginPage'
 import AppEventsPage from './pages/AppEventsPage'
+import AssistantPage from './pages/AssistantPage'
 import SegmentEditorPage from './pages/SegmentEditorPage'
 import SegmentMembersPage from './pages/SegmentMembersPage'
 import SegmentsPage from './pages/SegmentsPage'
@@ -44,6 +45,7 @@ export default function App() {
               <Route path="/segments/new" element={<SegmentEditorPage />} />
               <Route path="/segments/:slug" element={<SegmentMembersPage />} />
               <Route path="/segments/:slug/edit" element={<SegmentEditorPage />} />
+              <Route path="/assistant" element={<AssistantPage />} />
               <Route path="/setup" element={<SetupPage />} />
               <Route path="*" element={<Navigate to="/subscribers" replace />} />
             </Route>

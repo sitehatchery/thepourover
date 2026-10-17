@@ -1,5 +1,7 @@
 """Loading segments and turning them into filters for the people, app event and web event queries."""
 
+import re
+
 from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy import Select, and_, or_, select
@@ -20,6 +22,15 @@ def get_segment(session: Session, id_or_slug: str) -> Segment:
     if segment is None:
         raise HTTPException(404, detail=f"Segment '{id_or_slug}' not found")
     return segment
+
+
+def unique_slug(session: Session, name: str, current_id: int | None = None) -> str:
+    """URL-safe slug from a name, numbered if another segment already uses it."""
+    base = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:40] or "segment"
+    slug, n = base, 2
+    while (existing := session.scalar(select(Segment.segment_id).where(Segment.slug == slug))) and existing != current_id:
+        slug, n = f"{base}_{n}", n + 1
+    return slug
 
 
 def definition_of(segment: Segment) -> SegmentDefinition:

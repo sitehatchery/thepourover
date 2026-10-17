@@ -1,5 +1,3 @@
-import re
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -12,7 +10,7 @@ from app.models import SEGMENT_GROUP_APP_USERS, SEGMENT_GROUP_SUBSCRIBER, SEGMEN
 from app.queries.listing import ListParams, apply_sort, csv_response, iso, list_params, paginate
 from app.queries.people_rows import PEOPLE_COLUMNS, person_row, sort_columns
 from app.segments.engine import SegmentDefinition, describe, schema
-from app.segments.service import definition_of, get_segment, members
+from app.segments.service import definition_of, get_segment, members, unique_slug
 
 router = APIRouter(prefix="/app/segments", tags=["segments"], dependencies=[Depends(require_auth)])
 
@@ -48,14 +46,6 @@ def _out(session: Session, segment: Segment, with_count: bool = True) -> dict:
     }
 
 
-def _slugify(session: Session, name: str, current_id: int | None = None) -> str:
-    base = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:40] or "segment"
-    slug, n = base, 2
-    while (existing := session.scalar(select(Segment.segment_id).where(Segment.slug == slug))) and existing != current_id:
-        slug, n = f"{base}_{n}", n + 1
-    return slug
-
-
 @router.get("")
 def list_segments(with_counts: bool = True, session: Session = Depends(get_session)) -> list[dict]:
     """Saved segments, grouped by group then name, with live member counts."""
@@ -78,7 +68,7 @@ def preview(definition: SegmentDefinition, session: Session = Depends(get_sessio
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_segment(body: SegmentIn, session: Session = Depends(get_session)) -> dict:
     segment = Segment(
-        slug=_slugify(session, body.name),
+        slug=unique_slug(session, body.name),
         name=body.name.strip(),
         description=body.description.strip(),
         group=GROUPS[body.group],
@@ -102,7 +92,7 @@ def read_segment(id_or_slug: str, session: Session = Depends(get_session)) -> di
 def update_segment(id_or_slug: str, body: SegmentIn, session: Session = Depends(get_session)) -> dict:
     segment = get_segment(session, id_or_slug)
     segment.name = body.name.strip()
-    segment.slug = _slugify(session, body.name, segment.segment_id)
+    segment.slug = unique_slug(session, body.name, segment.segment_id)
     segment.description = body.description.strip()
     segment.group = GROUPS[body.group]
     segment.definition = body.definition.model_dump(exclude_none=True)
