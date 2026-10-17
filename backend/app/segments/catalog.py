@@ -64,11 +64,11 @@ CATALOG: list[dict] = [
         "slug": "disengaged",
         "name": "Disengaged",
         "group": SEGMENT_GROUP_SUBSCRIBER,
-        "description": "Signed up more than 90 days ago and no newsletter open in the last 90 days.",
+        "description": "Signed up more than 60 days ago and no newsletter open in the last 60 days.",
         "filters": [
             _f("is_subscriber", "equals", True),
-            _f("signup_date", "not_within_last_days", 90),
-            _f("last_open_date", "not_within_last_days", 90),
+            _f("signup_date", "not_within_last_days", 60),
+            _f("last_open_date", "not_within_last_days", 60),
         ],
     },
     {

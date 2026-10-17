@@ -19,6 +19,7 @@ SEEDED_COUNTS = {
     "unsubscribed": 290,
     "subscribers_without_app": 2000,
     "multi_channel_readers": 431,
+    "disengaged": 196,
 }
 
 
