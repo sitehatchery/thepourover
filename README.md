@@ -25,8 +25,8 @@ The data shown is the assessment's sample data.
 |---|---|
 | ![Setup: Load Data from Google Drive with the import result and history](docs/screenshots/setup-load-data.png) | ![A subscriber profile with segments, site visits and app activity](docs/screenshots/profile.png) |
 | **Setup:** a Google Drive import, with per-file counts and the import history | **Lookup:** one person's newsletter, web and app activity, and their segments |
-| ![App Events: an event sent through the webhook, with each processing step](docs/screenshots/app-events.png) | ![Subscribers filtered by three segments](docs/screenshots/segment-builder.png) |
-| **Webhook:** a login sent through the real webhook attaches 4 earlier anonymous events | **Segments as filters:** Engaged readers, Multi-channel readers and Signed up from Podcast combined |
+| ![App Events: an event sent through the webhook, and the live webhook feed](docs/screenshots/app-events.png) | ![Subscribers filtered by seven segments](docs/screenshots/segment-builder.png) |
+| **Webhook:** an event sent through the real webhook with each step, and the live feed of every call: stored, duplicate and rejected | **Segments as filters:** seven segments combined, narrowing 2,900 subscribers to 10 |
 | ![The assistant answering which pages new subscribers hit first](docs/screenshots/assistant-pii-panel.png) | |
 | **Assistant:** an answer with the definition it used and a table; "What the AI saw" shows the exact requests | |
 
