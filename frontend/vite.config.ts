@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 const apiTarget = process.env.CDP_API_URL ?? 'http://127.0.0.1:8000'
 
@@ -13,5 +13,10 @@ export default defineConfig({
       '/app/': { target: apiTarget, changeOrigin: false },
       '/webhooks/': { target: apiTarget, changeOrigin: false },
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['src/test/setup.ts'],
+    css: false,
   },
 })

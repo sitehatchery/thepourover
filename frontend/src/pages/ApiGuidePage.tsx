@@ -250,13 +250,14 @@ console.log(response.status, await response.json())`,
               samples={{
                 JSON: `{
   "name": "Engaged Instagram readers",
-  "description": "Opened recently and came from Instagram",
+  "description": "Came from Instagram, opened recently and read a story in the app this month",
+  "group": "subscriber",
   "definition": {
     "match": "all",
     "filters": [
-      { "field": "acquisition_source", "operator": "is", "value": "Instagram" },
+      { "field": "acquisition_source", "operator": "equals", "value": "Instagram" },
       { "field": "last_open_date", "operator": "within_last_days", "value": 14 },
-      { "field": "read_story", "operator": "has", "within_last_days": 30 }
+      { "field": "app_event_type", "operator": "includes", "value": "read_story", "within_last_days": 30 }
     ]
   }
 }`,
@@ -350,7 +351,6 @@ console.log(response.status, await response.json())`,
 const ERRORS: [string, string][] = [
   ['400', 'The input is wrong: a bad filter, date range or segment definition. Webhook payload errors list each field.'],
   ['401', 'Missing or expired credentials, or a webhook signature that doesn’t match.'],
-  ['403', 'Signed in, but not allowed (admin-only actions).'],
   ['404', 'No such subscriber, profile, segment or event.'],
   ['409', 'Conflicts with existing data, such as a segment name already in use.'],
   ['413', 'The webhook body is over 16 KB.'],

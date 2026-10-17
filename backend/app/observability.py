@@ -9,7 +9,7 @@
   that id, so a user report can be matched to the log without the log holding what they sent.
 
 Error conventions for everything else: 400 bad input (detail is a message or {message, errors}),
-401 not signed in or bad signature, 403 not allowed, 404 unknown id, 409 conflict, 413 too large,
+401 not signed in or bad signature, 404 unknown id, 409 conflict, 413 too large,
 422 request didn't match the schema (FastAPI's standard shape), 429 rate limited (with Retry-After),
 503 a dependency (OpenAI, Google) isn't configured or reachable.
 """
@@ -23,6 +23,7 @@ import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from starlette.routing import Mount
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 REQUEST_ID_HEADER = "X-Request-ID"
@@ -51,6 +52,8 @@ def route_template(scope: Scope) -> str:
     template = getattr(route, "path", None)
     if template is None:
         return "(no route)"
+    if isinstance(route, Mount):  # static files and the like: the rest of the path is a file name
+        return f"{scope.get('root_path', '')}/*"  # root_path already ends with the mount's own path
     path_segments = scope.get("path", "").strip("/").split("/")
     template_segments = [s for s in template.strip("/").split("/") if s]
     prefix = path_segments[: max(len(path_segments) - len(template_segments), 0)]
