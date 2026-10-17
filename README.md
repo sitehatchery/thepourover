@@ -2,6 +2,10 @@
 
 A small customer data platform that brings newsletter subscribers, website visits and app activity into one place for the Growth team. Built as a take-home assessment for The Pour Over.
 
+- **Live:** https://cdp-production-102e.up.railway.app (sign-in required)
+- **Webhook:** `POST https://cdp-production-102e.up.railway.app/webhooks/app` (alias of `/app/webhooks/app`), signed as described below
+- **API docs:** https://cdp-production-102e.up.railway.app/app/docs
+
 > Work in progress. This README grows with the project; the full version (architecture, data rules, webhook, PII handling, security) is tracked in Jira TPO-222.
 
 ## Stack
@@ -35,6 +39,12 @@ API docs: http://127.0.0.1:8000/app/docs
 Settings come from environment variables or `backend/.env` (see `backend/.env.example`). "Today" is fixed at **2026-09-28**, per the brief.
 
 For `https://cdp.local` through WAMP, see `deploy/apache/cdp.local.conf`.
+
+## Deployment (Railway)
+
+One container (`Dockerfile`): a Node stage builds the React app; the runtime runs FastAPI (uvicorn, one worker) behind Nginx. Nginx serves the build, proxies `/app` and `/webhooks`, and sets HSTS, CSP and the other security headers. The SQLite database and import reports live on a volume mounted at `/data`. `deploy/start.sh` runs migrations, creates the first admin from `CDP_INITIAL_USER` / `CDP_INITIAL_PASSWORD`, loads the sample data the first time, then supervises both processes. `railway.json` sets the Dockerfile build and the `/app/health` health check.
+
+Service variables: `CDP_JWT_SECRET`, `CDP_WEBHOOK_SECRETS`, `CDP_INITIAL_USER`, `CDP_INITIAL_PASSWORD`, `OPENAI_API_KEY`, `GOOGLE_OAUTH_CLIENT`, `GOOGLE_OAUTH_SECRET`, `CDP_APP_ORIGINS` (the public URL) and `CDP_GOOGLE_REDIRECT_URI` (`https://<public URL>/app/integrations/google/callback`, also registered in Google Cloud).
 
 ## Tests
 
