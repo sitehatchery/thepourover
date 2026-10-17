@@ -1,0 +1,179 @@
+.setup-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.setup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.setup-card h2 {
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.setup-card > p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.setup-facts {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+}
+
+.setup-facts strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.source-box {
+  padding: 14px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--canvas);
+}
+
+.source-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.file-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+}
+
+.file-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.file-size {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.load-btn {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 28px;
+}
+
+.result-line {
+  margin: 0;
+  font-size: 14px;
+}
+
+.result-line.ok {
+  color: var(--success);
+}
+
+.result-line.failed {
+  color: var(--danger);
+}
+
+.run-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.history-table th {
+  padding: 6px 12px 6px 0;
+  text-align: left;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.history-table td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.history-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.history-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-table .rejected {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.history-message {
+  color: var(--text);
+}
+
+.report-line {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.confirm-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 24px;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgb(63 50 43 / 22%);
+  color: var(--text);
+}
+
+.confirm-dialog::backdrop {
+  background: rgb(30 22 18 / 45%);
+}
+
+.confirm-dialog h2 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.confirm-dialog p {
+  margin: 0 0 18px;
+  font-size: 14px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+}

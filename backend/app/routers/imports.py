@@ -40,6 +40,18 @@ class ImportRunOut(BaseModel):
         )
 
 
+@router.get("/source")
+def describe_source() -> dict:
+    """Where the next import reads from, and the files waiting there. The server path itself isn't exposed."""
+    source = LocalFolderSource(get_settings().import_source_dir)
+    try:
+        names = source.list_files()
+    except FileNotFoundError:
+        return {"kind": source.label, "folder": source.folder.name, "available": False, "files": []}
+    files = [{"name": n, "size_bytes": (source.folder / n).stat().st_size} for n in names]
+    return {"kind": source.label, "folder": source.folder.name, "available": True, "files": files}
+
+
 @router.post("", response_model=ImportRunOut)
 def start_import(session: Session = Depends(get_session)) -> ImportRunOut:
     """Replace subscribers, app users, app events and web events with a fresh import.

@@ -263,6 +263,9 @@ def describe(definition: SegmentDefinition) -> str:
         if f.operator in ("is_empty", "is_not_empty"):
             parts.append(f"{label} {words[f.operator]}")
             continue
+        if isinstance(f.value, bool):
+            parts.append(f"{label}: {'yes' if f.value else 'no'}")
+            continue
         value = ", ".join(f.value) if isinstance(f.value, list) else ("yes" if f.value is True else "no" if f.value is False else f.value)
         suffix = " days" if "within" in f.operator else ""
         window = f" in the last {f.within_last_days} days" if f.within_last_days else ""

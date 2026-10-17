@@ -34,6 +34,15 @@ def test_import_with_api_key(client, api_key):
     assert report.text.startswith("severity,file,row,field,value,reason")
 
 
+def test_import_source_lists_files_without_server_paths(client, auth):
+    body = client.get("/app/import/source", headers=auth).json()
+
+    assert body["kind"] == "local" and body["available"] is True
+    assert body["folder"] == "sample"
+    assert sorted(f["name"] for f in body["files"]) == ["app_users.csv", "subscribers.csv", "web_events.csv"]
+    assert "\\" not in str(body) and "/" not in body["folder"]
+
+
 def test_revoked_and_expired_keys_are_rejected(client, session, api_key):
     headers = {"Authorization": f"Bearer {api_key}"}
     key = session.scalar(select(ApiClient))

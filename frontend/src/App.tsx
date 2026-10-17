@@ -7,6 +7,10 @@ import Layout from './components/Layout'
 import { setToday } from './lib/format'
 import LoginPage from './pages/LoginPage'
 import AppEventsPage from './pages/AppEventsPage'
+import SegmentEditorPage from './pages/SegmentEditorPage'
+import SegmentMembersPage from './pages/SegmentMembersPage'
+import SegmentsPage from './pages/SegmentsPage'
+import SetupPage from './pages/SetupPage'
 import SubscribersPage from './pages/SubscribersPage'
 import WebEventsPage from './pages/WebEventsPage'
 
@@ -36,6 +40,11 @@ export default function App() {
               <Route path="/subscribers" element={<SubscribersPage />} />
               <Route path="/web-events" element={<WebEventsPage />} />
               <Route path="/app-events" element={<AppEventsPage />} />
+              <Route path="/segments" element={<SegmentsPage />} />
+              <Route path="/segments/new" element={<SegmentEditorPage />} />
+              <Route path="/segments/:slug" element={<SegmentMembersPage />} />
+              <Route path="/segments/:slug/edit" element={<SegmentEditorPage />} />
+              <Route path="/setup" element={<SetupPage />} />
               <Route path="*" element={<Navigate to="/subscribers" replace />} />
             </Route>
           </Route>

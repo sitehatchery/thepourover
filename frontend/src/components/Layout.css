@@ -121,10 +121,26 @@
   color: var(--muted);
 }
 
+.brand-name {
+  white-space: nowrap;
+}
+
 @media (max-width: 1180px) {
   .brand-title,
   .nav-username {
     display: none;
+  }
+
+  .header-inner {
+    gap: 14px;
+  }
+
+  .nav-link {
+    padding: 8px 10px;
+  }
+
+  .profile-search {
+    width: 200px;
   }
 }
 

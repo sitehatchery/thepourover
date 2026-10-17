@@ -72,4 +72,42 @@ export type SegmentSummary = {
   member_count: number | null
 }
 
+export type SegmentFilter = {
+  field: string
+  operator: string
+  value?: string | number | boolean | string[] | null
+  within_last_days?: number | null
+}
+
+export type SegmentDefinition = { match: 'all' | 'any'; filters: SegmentFilter[] }
+
+export type Segment = SegmentSummary & {
+  definition: SegmentDefinition
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type FieldSpec = {
+  type: 'string' | 'number' | 'date' | 'boolean' | 'activity'
+  label: string
+  description: string
+  category: string
+  operators: string[]
+  values?: string[]
+  supports_within_last_days?: boolean
+}
+
+export type SegmentSchema = { today: string; fields: Record<string, FieldSpec> }
+
+export type ImportRun = {
+  import_run_id: number
+  status: 'running' | 'succeeded' | 'failed'
+  source: string
+  message: string
+  file_stats: Record<string, { entity: string; read: number; loaded: number; fixed: number; rejected: number; duplicates_merged: number }>
+  has_error_report: boolean
+  started_at: string
+  finished_at: string | null
+}
+
 export type CurrentUser = { kind: string; id: number; name: string; is_admin: boolean }

@@ -10,6 +10,8 @@ const NAV = [
   { to: '/subscribers', label: 'Subscribers' },
   { to: '/web-events', label: 'Web Events' },
   { to: '/app-events', label: 'App Events' },
+  { to: '/segments', label: 'Segments' },
+  { to: '/setup', label: 'Setup' },
 ]
 
 export function BrandMark({ size = 34 }: { size?: number }) {

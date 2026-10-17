@@ -66,6 +66,8 @@ def test_describe_reads_like_english():
         ]
     )
     assert describe(definition) == "Acquisition source is Instagram AND Last email open not in the last 30 days"
+    yes_no = SegmentDefinition(match="any", filters=[{"field": "has_app_account", "operator": "equals", "value": False}])
+    assert describe(yes_no) == "Has an app account: no"
 
 
 # ---- evaluation ---------------------------------------------------------------------------------

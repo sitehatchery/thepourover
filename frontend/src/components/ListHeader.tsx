@@ -8,12 +8,14 @@ type Props = {
   hasFilters: boolean
   /** Singular noun, e.g. "web event". */
   noun: string
+  /** Plural when it isn't just noun + "s", e.g. "people". */
+  plural?: string
   onExport: () => Promise<void>
   children?: ReactNode
 }
 
 /** Page title, live count and the Export CSV button shared by the table pages. */
-export default function ListHeader({ title, description, total, hasFilters, noun, onExport, children }: Props) {
+export default function ListHeader({ title, description, total, hasFilters, noun, plural, onExport, children }: Props) {
   const [exporting, setExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,7 +37,7 @@ export default function ListHeader({ title, description, total, hasFilters, noun
         <div>
           <h1>{title}</h1>
           <p className="page-sub">
-            {total === undefined ? description : countOf(total, hasFilters ? `matching ${noun}` : noun)}
+            {total === undefined ? description : countOf(total, hasFilters ? `matching ${noun}` : noun, plural && (hasFilters ? `matching ${plural}` : plural))}
           </p>
         </div>
         <div className="page-actions">
