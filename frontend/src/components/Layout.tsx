@@ -15,8 +15,9 @@ const NAV = [
   { to: '/setup', label: 'Setup' },
 ]
 
-export function BrandMark({ size = 34 }: { size?: number }) {
-  return <span className="brand-mark" style={{ width: size, height: size }} aria-hidden="true" />
+/** The Pour Over logo. Like on thepourover.org, it tips like a kettle pouring on hover. */
+export function BrandMark({ size = 38 }: { size?: number }) {
+  return <img className="brand-mark" src="/tpo-logo.png" width={size} height={size} alt="" aria-hidden="true" />
 }
 
 export default function Layout() {
