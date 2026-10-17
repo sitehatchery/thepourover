@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.models import GoogleConnection
+from app.net import outbound_client
 from app.rules import utcnow
 
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -41,7 +42,7 @@ class GoogleError(Exception):
 
 def http_client() -> httpx.Client:
     """Factory so tests can swap in a mock transport."""
-    return httpx.Client(timeout=20)
+    return outbound_client()
 
 
 # ---- token encryption -------------------------------------------------------------------------------

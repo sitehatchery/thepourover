@@ -36,14 +36,18 @@ class ChatModel(Protocol):
 class OpenAIChatModel:
     """OpenAI Chat Completions with tool calling."""
 
-    def __init__(self, api_key: str, model: str):
+    def __init__(self, api_key: str, model: str, reasoning_effort: str = ""):
         from openai import OpenAI
 
-        self._client = OpenAI(api_key=api_key)
+        from app.net import outbound_client
+
+        self._client = OpenAI(api_key=api_key, http_client=outbound_client(timeout=120))
         self.model = model
+        self.reasoning_effort = reasoning_effort
 
     def complete(self, messages: list[dict], tools: list[dict]) -> ModelReply:
-        response = self._client.chat.completions.create(model=self.model, messages=messages, tools=tools)
+        extra = {"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}
+        response = self._client.chat.completions.create(model=self.model, messages=messages, tools=tools, **extra)
         message = response.choices[0].message
         calls = [ToolCall(c.id, c.function.name, c.function.arguments or "{}") for c in (message.tool_calls or [])]
         return ModelReply(message.content, calls)

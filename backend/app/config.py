@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     # AI assistant. The key is read from CDP_OPENAI_API_KEY or the usual OPENAI_API_KEY.
     openai_api_key: str = Field(default="", validation_alias=AliasChoices("CDP_OPENAI_API_KEY", "OPENAI_API_KEY"))
     openai_model: str = "gpt-5-mini"
+    # For reasoning models: low keeps answers quick; the tools do the heavy lifting. Empty = model default.
+    openai_reasoning_effort: str = "low"
     assistant_max_tool_rounds: int = 6
 
     # Google Drive import. The OAuth client is a "Web application" client; Google only accepts
@@ -47,6 +49,9 @@ class Settings(BaseSettings):
     google_drive_folder_id: str = "1teqRUXwm-ONYlw8KvgMBX0NHVflhkzHd"
     # Where the browser may be sent back to after connecting (comma-separated origins).
     app_origins: str = "https://cdp.local,http://localhost:5173"
+
+    # Connect to other services over IPv4 (see app/net.py for why).
+    outbound_ipv4_only: bool = True
 
     @property
     def app_origin_list(self) -> list[str]:

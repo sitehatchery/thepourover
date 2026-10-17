@@ -102,6 +102,14 @@ A segment is a saved definition, evaluated live against the database every time 
 - **Built-in catalog:** 22 segments are seeded by `init-db`, including the brief's "Instagram signups not opened in 30 days" (229 people in the sample). Seeding only adds missing segments, so edits are kept.
 - **Endpoints:** `GET/POST /app/segments`, `GET/PUT/DELETE /app/segments/{id or slug}`, `/members` (paged or `format=csv`), `/count`, and `POST /app/segments/preview`. `segment_id` (repeatable) filters `/app/subscribers`, `/app/app_events` and `/app/web_events`.
 
+## Google Drive import
+
+Imports can read the shared Drive folder instead of files on the server, the way files from other systems usually arrive. On the Setup page choose **Google Drive → Connect**. OAuth uses the authorization code flow with PKCE and the read-only Drive scope. The refresh token is stored encrypted on the server and never reaches the browser. CSVs are downloaded, and Google Sheets are exported as CSV.
+
+Google only accepts public domains or `localhost` as redirect URIs, so in local development the callback goes straight to the API: `http://localhost:8000/app/integrations/google/callback`. In production, register `https://<your domain>/app/integrations/google/callback` and set `CDP_GOOGLE_REDIRECT_URI`.
+
+All calls to Google and OpenAI go over IPv4 (`app/net.py`). Python tries IPv6 addresses one after another, and on networks with a broken IPv6 route each call stalled for 20 s or more.
+
 ## AI assistant and PII
 
 The Assistant page answers plain-English questions ("How many Instagram signups went cold last month?", "Build me a list of our most engaged readers", "Which pages do new subscribers hit first?") with an answer, a table or a segment. It uses OpenAI with tool calling (`OPENAI_API_KEY`, model set by `CDP_OPENAI_MODEL`).

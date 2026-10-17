@@ -22,7 +22,7 @@ def get_model() -> ChatModel:
     settings = get_settings()
     if not settings.openai_api_key:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail="The assistant isn't configured: set OPENAI_API_KEY in backend/.env")
-    return OpenAIChatModel(settings.openai_api_key, settings.openai_model)
+    return OpenAIChatModel(settings.openai_api_key, settings.openai_model, settings.openai_reasoning_effort)
 
 
 class Turn(BaseModel):
