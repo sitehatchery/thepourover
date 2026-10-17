@@ -152,3 +152,13 @@ def test_placeholder_profile_and_unknown_profile(client, auth, imported):
     assert client.get("/app/profiles/u_u_never_seen/web_events", headers=auth).json()["total"] == 0
     assert client.get("/app/profiles/s_999999/app_events", headers=auth).status_code == 404
     assert client.get("/app/profiles/x_1/app_events", headers=auth).status_code == 404
+
+
+def test_csv_export_escapes_formula_cells(client, auth):
+    # "-" is a valid first character for a device id, and spreadsheet apps would read "-23" as a formula.
+    _send(client, auth, "evt_formula", None, device="-23")
+
+    text = client.get("/app/app_events?format=csv", headers=auth).text
+    rows = list(csv.DictReader(line for line in text.splitlines() if not line.startswith("#")))
+    assert rows[0]["device_id"] == "'-23"
+    assert client.get("/app/app_events?format=csv").status_code == 401  # exports contain PII

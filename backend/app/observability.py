@@ -33,13 +33,14 @@ log = logging.getLogger("cdp.request")
 
 
 def configure_logging(level: int = logging.INFO) -> None:
-    root = logging.getLogger("cdp")
-    if root.handlers:
-        return
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
-    root.addHandler(handler)
-    root.setLevel(level)
+    # INFO for the app's own loggers only; other libraries stay at the root's WARNING. The handler goes on the
+    # root logger, and only if nothing (e.g. Alembic's logging config) has set one up, so lines print once.
+    logging.getLogger("cdp").setLevel(level)
+    root = logging.getLogger()
+    if not root.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+        root.addHandler(handler)
 
 
 def route_template(scope: Scope) -> str:
