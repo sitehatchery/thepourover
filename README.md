@@ -2,9 +2,9 @@
 
 A small customer data platform that brings newsletter subscribers, website visits and app activity into one place for the Growth team. Built as a take-home assessment for The Pour Over.
 
-- **Live:** https://cdp-production-102e.up.railway.app (sign-in required)
-- **Webhook:** `POST https://cdp-production-102e.up.railway.app/webhooks/app` (alias of `/app/webhooks/app`), signed as described below
-- **API docs:** https://cdp-production-102e.up.railway.app/app/docs
+- **Live:** https://thepourover.seedcast.ai (sign-in required; also at https://cdp-production-102e.up.railway.app)
+- **Webhook:** `POST https://thepourover.seedcast.ai/webhooks/app` (alias of `/app/webhooks/app`), signed as described below
+- **API docs:** https://thepourover.seedcast.ai/app/docs
 
 > Work in progress. This README grows with the project; the full version (architecture, data rules, webhook, PII handling, security) is tracked in Jira TPO-222.
 
