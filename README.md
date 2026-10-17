@@ -248,6 +248,7 @@ Service variables: `CDP_JWT_SECRET`, `CDP_WEBHOOK_SECRETS`, `CDP_INITIAL_USER`, 
 
 - **Jira Rovo** expanded Jason's hand-written stories into the first backlog. A review pass found duplicated subtasks, overlapping stories and gaps (security, PII in logs, CI), which were resolved with Jason before building.
 - **Claude Code** (Claude Opus) wrote the code, tests, deployment and Jira updates, story by story, with Jason reviewing each step and the live site. Jason made the product and design calls; the session log and time are on Jira TPO-1.
+- **ChatGPT** was used lightly by Jason, outside the codebase: to think through how to approach the AI assistant and its PII boundary, and to cross-check some of Claude's answers. It inspected the raw CSVs independently, and its counts agree with the importer's: 8,441 of 10,000 web events attributable to a person, 7,041 of them through `visitor_id`, and no visitor with two emails. Its 2,902 distinct subscriber emails are our 2,900 plus the 2 malformed addresses the importer rejects. Where it differed, the decision was deliberate: it suggested keeping the *oldest* duplicate subscriber row, while this build keeps the most recently active one (Jason's call, since the latest `last_open_date` is the freshest signal).
 - **OpenAI** (`gpt-5-mini`) powers the in-app assistant only. It never sees personal data (see above).
 
 Where the AI was wrong, and how it was caught:
