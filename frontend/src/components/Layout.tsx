@@ -13,6 +13,7 @@ const NAV = [
   { to: '/segments', label: 'Segments' },
   { to: '/assistant', label: 'Assistant' },
   { to: '/setup', label: 'Setup' },
+  { to: '/api', label: 'API' },
 ]
 
 /** The Pour Over logo. Like on thepourover.org, it tips like a kettle pouring on hover. */
@@ -75,9 +76,19 @@ export default function Layout() {
         Prepared by Jason Cox for The Pour Over <span aria-hidden="true">|</span> October 2026{' '}
         <span aria-hidden="true">|</span> Full-stack Developer Pre-Employment Project
         <span className="footer-links">
+          <NavLink to="/api">API guide</NavLink> <span aria-hidden="true">|</span>{' '}
           <a href="/app/docs" target="_blank" rel="noopener">
-            API documentation
+            API reference
           </a>
+          {user?.is_admin && (
+            <>
+              {' '}
+              <span aria-hidden="true">|</span>{' '}
+              <a href="/app/admin/" target="_blank" rel="noopener">
+                Admin console
+              </a>
+            </>
+          )}
         </span>
       </footer>
     </div>

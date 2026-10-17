@@ -6,6 +6,7 @@ import { useAuth } from './auth/useAuth'
 import Layout from './components/Layout'
 import { setToday } from './lib/format'
 import LoginPage from './pages/LoginPage'
+import ApiGuidePage from './pages/ApiGuidePage'
 import AppEventsPage from './pages/AppEventsPage'
 import AssistantPage from './pages/AssistantPage'
 import SegmentEditorPage from './pages/SegmentEditorPage'
@@ -47,6 +48,7 @@ export default function App() {
               <Route path="/segments/:slug/edit" element={<SegmentEditorPage />} />
               <Route path="/assistant" element={<AssistantPage />} />
               <Route path="/setup" element={<SetupPage />} />
+              <Route path="/api" element={<ApiGuidePage />} />
               <Route path="*" element={<Navigate to="/subscribers" replace />} />
             </Route>
           </Route>
