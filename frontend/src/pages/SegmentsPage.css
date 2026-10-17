@@ -1,0 +1,112 @@
+.segment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.segment-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.segment-group-head h2 {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.segment-group-head p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.segment-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.segment-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.segment-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow);
+}
+
+.segment-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.segment-name {
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.segment-name:hover {
+  color: var(--coral-strong);
+}
+
+.segment-count {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--coral-tint);
+  color: var(--coral-strong);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.segment-summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.segment-desc {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.segment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 13px;
+}
+
+.segment-actions a,
+.segment-actions .link-btn {
+  color: var(--coral-strong);
+  text-decoration: none;
+}
+
+.segment-actions a:hover {
+  text-decoration: underline;
+}
+
+.link-btn.danger {
+  color: var(--danger);
+  text-decoration: none;
+}

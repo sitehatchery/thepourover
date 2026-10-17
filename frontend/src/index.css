@@ -1,0 +1,192 @@
+/* Design tokens taken from thepourover.org: Poppins, warm brown text, coral accent. */
+:root {
+  --font: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+  --ink: #0a0a0a; /* headings */
+  --text: #3f322b; /* body copy */
+  --muted: #8a7d75;
+  --line: #e5e5e5;
+  --line-strong: #d6d1cd;
+  --surface: #ffffff;
+  --canvas: #faf8f7;
+  --coral: #f2817d;
+  --coral-strong: #e0605b;
+  --coral-tint: #fdf3f3;
+  --focus: #f2817d66;
+  --danger: #b4423d;
+  --success: #3f7d58;
+
+  --radius: 10px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 2px rgb(63 50 43 / 6%), 0 4px 16px rgb(63 50 43 / 6%);
+
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--canvas);
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- buttons and inputs -------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn:hover {
+  border-color: var(--coral);
+  color: var(--coral-strong);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--coral-strong);
+  border-color: var(--coral-strong);
+  color: #fff;
+}
+
+.btn-note {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.btn-active {
+  background: var(--coral-tint);
+  border-color: var(--coral);
+  color: var(--coral-strong);
+}
+
+.input {
+  min-height: 38px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 14px;
+}
+
+.input:focus {
+  border-color: var(--coral);
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgb(242 129 125 / 45%);
+  text-underline-offset: 3px;
+}
+
+.link-btn:hover,
+.count-link:hover {
+  color: var(--coral-strong);
+  text-decoration-color: var(--coral);
+}
+
+.count-link {
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-color: rgb(242 129 125 / 45%);
+  text-underline-offset: 3px;
+}
+
+.cell-muted {
+  color: var(--muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 13px;
+}

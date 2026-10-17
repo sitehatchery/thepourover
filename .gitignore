@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Local settings and secrets
+.env
+!.env.example
+
+# Runtime data: SQLite database and import reports
+var/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,49 @@
+# Rendered at start-up with envsubst (only ${PORT} is substituted).
+server {
+    listen ${PORT};
+    server_name _;
+
+    root /srv/web;
+    index index.html;
+    client_max_body_size 1m;
+    server_tokens off;
+
+    # The platform's proxy terminates TLS and sets X-Forwarded-*; pass them on to the API.
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+
+    # The API's interactive docs load Swagger UI from a CDN, so they get their own policy.
+    location /app/docs {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https://fastapi.tiangolo.com; frame-ancestors 'none'" always;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location /app/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'" always;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_read_timeout 180s;
+    }
+
+    location /webhooks/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # Hashed build assets can be cached for a long time; index.html must not be.
+    location /assets/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, immutable";
+        expires 1y;
+        try_files $uri =404;
+    }
+
+    location / {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+        add_header Cache-Control "no-store";
+        try_files $uri /index.html;
+    }
+}

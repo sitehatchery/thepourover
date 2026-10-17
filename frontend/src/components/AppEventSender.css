@@ -1,0 +1,151 @@
+.sender {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  gap: 16px;
+}
+
+.sender-form,
+.sender-result {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.sender-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sender-head h2 {
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.sender-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sender-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px 16px;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.input-with-btn {
+  display: flex;
+  gap: 4px;
+}
+
+.input-with-btn .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.input-with-btn .btn {
+  padding: 0 10px;
+}
+
+.properties {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.properties legend {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.property-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.property-row select {
+  width: 110px;
+  flex: none;
+}
+
+.property-row .input:not(select) {
+  flex: 1;
+  min-width: 0;
+}
+
+.sender-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sender-result h3 {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.result-status {
+  margin: 0 0 10px;
+  font-weight: 400;
+}
+
+.result-status.ok {
+  color: var(--success);
+}
+
+.result-status.dup {
+  color: #8a5a12;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.steps li {
+  counter-increment: step;
+  display: flex;
+  gap: 10px;
+}
+
+.steps li::before {
+  content: counter(step);
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--coral-tint);
+  color: var(--coral-strong);
+  font-size: 12px;
+  font-weight: 500;
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 900px) {
+  .sender {
+    grid-template-columns: 1fr;
+  }
+}
