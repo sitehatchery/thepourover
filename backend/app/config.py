@@ -39,6 +39,19 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5-mini"
     assistant_max_tool_rounds: int = 6
 
+    # Google Drive import. The OAuth client is a "Web application" client; Google only accepts
+    # localhost (or a real public domain) as a redirect, so local dev redirects to the API directly.
+    google_client_id: str = Field(default="", validation_alias=AliasChoices("CDP_GOOGLE_CLIENT_ID", "GOOGLE_OAUTH_CLIENT"))
+    google_client_secret: str = Field(default="", validation_alias=AliasChoices("CDP_GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_SECRET"))
+    google_redirect_uri: str = "http://localhost:8000/app/integrations/google/callback"
+    google_drive_folder_id: str = "1teqRUXwm-ONYlw8KvgMBX0NHVflhkzHd"
+    # Where the browser may be sent back to after connecting (comma-separated origins).
+    app_origins: str = "https://cdp.local,http://localhost:5173"
+
+    @property
+    def app_origin_list(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.app_origins.split(",") if o.strip()]
+
     @property
     def webhook_secret_list(self) -> list[str]:
         return [s.strip() for s in self.webhook_secrets.split(",") if s.strip()]

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -10,7 +11,8 @@ from app.auth.deps import require_auth
 from app.config import get_settings
 from app.db import get_session
 from app.importer.service import run_import
-from app.importer.sources import LocalFolderSource
+from app.importer.sources import DriveFolderSource, LocalFolderSource
+from app.integrations import google
 from app.models import ImportRun
 
 router = APIRouter(prefix="/import", tags=["import"], dependencies=[Depends(require_auth)])
@@ -53,12 +55,18 @@ def describe_source() -> dict:
 
 
 @router.post("", response_model=ImportRunOut)
-def start_import(session: Session = Depends(get_session)) -> ImportRunOut:
+def start_import(
+    source: Literal["auto", "google_drive", "local"] = "auto", session: Session = Depends(get_session)
+) -> ImportRunOut:
     """Replace subscribers, app users, app events and web events with a fresh import.
-    Segments, sources and credentials are kept."""
+    Segments, sources and credentials are kept. `auto` reads Google Drive when it's connected,
+    otherwise the local drop folder."""
     settings = get_settings()
-    run = run_import(session, LocalFolderSource(settings.import_source_dir), settings)
-    return ImportRunOut.of(run)
+    use_drive = source == "google_drive" or (source == "auto" and google.connection(session) is not None)
+    if use_drive and google.connection(session) is None:
+        raise HTTPException(400, detail="Google Drive isn't connected")
+    reader = DriveFolderSource(session, settings) if use_drive else LocalFolderSource(settings.import_source_dir)
+    return ImportRunOut.of(run_import(session, reader, settings))
 
 
 @router.get("/runs", response_model=list[ImportRunOut])

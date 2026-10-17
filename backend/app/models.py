@@ -139,6 +139,21 @@ class RefreshToken(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime)
 
 
+class GoogleConnection(Base):
+    """The single Google account the importer reads Drive files with. Tokens are encrypted at rest."""
+
+    __tablename__ = "google_connections"
+
+    google_connection_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    account_email: Mapped[str | None] = mapped_column(String(255))
+    refresh_token_encrypted: Mapped[str] = mapped_column(Text)
+    access_token_encrypted: Mapped[str | None] = mapped_column(Text)
+    access_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime)
+    scopes: Mapped[str] = mapped_column(Text, default="")
+    connected_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    connected_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.user_id"))
+
+
 class ImportRun(Base):
     __tablename__ = "import_runs"
 
