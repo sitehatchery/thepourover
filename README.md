@@ -105,6 +105,14 @@ npm run dev        # http://localhost:5173, proxies /app and /webhooks to the AP
 
 Settings come from environment variables or `backend/.env`. [`backend/.env.example`](backend/.env.example) lists every setting with its default and no real secrets. "Today" is fixed at **2026-09-28**, per the brief. For `https://cdp.local` through WAMP, see `deploy/apache/cdp.local.conf`.
 
+### Try the API in Postman
+
+Import [`docs/postman/mini-cdp.postman_collection.json`](docs/postman/mini-cdp.postman_collection.json). It has 25 requests: sign-in, subscribers and profiles, events, segments, the assistant, and the webhook.
+
+1. Create a Postman environment with `username`, `password` and `webhookSecret` (mark the last two as secret). `baseUrl` defaults to the live site; set it to `http://127.0.0.1:8000` to use a local copy.
+2. Run **1. Sign-in → Sign in**. It saves the access and refresh tokens, and every other request uses them. To use an API key instead, paste it into the `bearerToken` variable. Keys are created, rotated and revoked in the admin console, not through the API.
+3. Run **4. Webhook** in order: an anonymous event, a login that attaches it, the same event again (duplicate), and a bad signature (401). Each request signs itself with HMAC-SHA256 in a pre-request script, the same way the mobile app's backend would.
+
 ## Tests
 
 ```bash
