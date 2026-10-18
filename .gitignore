@@ -19,9 +19,8 @@ Thumbs.db
 
 # Postman desktop: local workspace link and its own copy of the collection
 # (reviewers import docs/postman/mini-cdp.postman_collection.json instead)
-.postman/
-postman/
-docs/postman/The Pour Over Mini CDP/
+/.postman/
+/postman/
 
 # Installers and other binaries downloaded locally
 *.exe

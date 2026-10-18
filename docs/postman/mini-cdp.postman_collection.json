@@ -474,7 +474,7 @@
     },
     {
       "name": "4. Webhook (signed, no sign-in)",
-      "description": "Run these in order to see stitching: anonymous, then login (attaches it), then a duplicate, then a bad signature.",
+      "description": "Run these in order to see stitching: anonymous, then login (attaches it), then a duplicate, then a bad signature. e sends an earlier event late (out of order); f uses a user_id never seen before.",
       "item": [
         {
           "name": "a. Anonymous app_open",
@@ -517,12 +517,13 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
-                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id.",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
                   "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
                   "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
                   "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
                   "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
                   "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
                   "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
                   "pm.collectionVariables.set('lastEventId', event.event_id);",
                   "const body = JSON.stringify(event);",
@@ -578,12 +579,13 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
-                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id.",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
                   "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
                   "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
                   "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
                   "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
                   "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
                   "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
                   "pm.collectionVariables.set('lastEventId', event.event_id);",
                   "const body = JSON.stringify(event);",
@@ -639,12 +641,13 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
-                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id.",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
                   "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
                   "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
                   "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
                   "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
                   "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
                   "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
                   "pm.collectionVariables.set('lastEventId', event.event_id);",
                   "const body = JSON.stringify(event);",
@@ -705,12 +708,137 @@
                 "type": "text/javascript",
                 "exec": [
                   "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
-                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id.",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
                   "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
                   "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
                   "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
                   "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
                   "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "e. Late anonymous event (out of order)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "An anonymous event from earlier today that arrives after the login (send after b). It attaches to the user who logged in on this device later.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"auto\",\n  \"event\": \"app_open\",\n  \"user_id\": null,\n  \"device_id\": \"{{deviceId}}\",\n  \"timestamp\": \"2026-09-28T00:00:01Z\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "f. Unknown user_id (placeholder profile)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "A login from a user_id the CDP has never seen. It gets a placeholder profile instead of being dropped; search for the id in the app to open it.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"auto\",\n  \"event\": \"login\",\n  \"user_id\": \"new\",\n  \"device_id\": \"d_newphone\",\n  \"timestamp\": \"auto\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
                   "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
                   "pm.collectionVariables.set('lastEventId', event.event_id);",
                   "const body = JSON.stringify(event);",

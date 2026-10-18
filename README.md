@@ -107,11 +107,11 @@ Settings come from environment variables or `backend/.env`. [`backend/.env.examp
 
 ### Try the API in Postman
 
-Import [`docs/postman/mini-cdp.postman_collection.json`](docs/postman/mini-cdp.postman_collection.json). It has 25 requests: sign-in, subscribers and profiles, events, segments, the assistant, and the webhook.
+Import [`docs/postman/mini-cdp.postman_collection.json`](docs/postman/mini-cdp.postman_collection.json). It has 27 requests: sign-in, subscribers and profiles, events, segments, the assistant, and the webhook.
 
 1. Create a Postman environment with `username`, `password` and `webhookSecret` (mark the last two as secret). `baseUrl` defaults to the live site; set it to `http://127.0.0.1:8000` to use a local copy.
 2. Run **1. Sign-in → Sign in**. It saves the access and refresh tokens, and every other request uses them. To use an API key instead, paste it into the `bearerToken` variable. Keys are created, rotated and revoked in the admin console, not through the API.
-3. Run **4. Webhook** in order: an anonymous event, a login that attaches it, the same event again (duplicate), and a bad signature (401). Each request signs itself with HMAC-SHA256 in a pre-request script, the same way the mobile app's backend would.
+3. Run **4. Webhook** in order: an anonymous event, a login that attaches it, the same event again (duplicate), a bad signature (401), an earlier event that arrives late and still attaches (out of order), and a login from a user id never seen before (placeholder profile). Each request signs itself with HMAC-SHA256 in a pre-request script, the same way the mobile app's backend would.
 
 ## Tests
 
