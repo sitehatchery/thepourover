@@ -24,11 +24,13 @@ fi
 
 envsubst '${PORT}' < /etc/nginx/templates/cdp.conf.template > /etc/nginx/conf.d/cdp.conf
 
-# Only Nginx (127.0.0.1) is trusted to forward headers. Uvicorn then takes the client address from the right
-# end of X-Forwarded-For, the entry the platform's proxy added, so a client can't pick its own address to
-# dodge the rate limits. Uvicorn's access log is off because it prints query strings (which can hold
-# emails); the app logs each request itself without them.
-su cdp -s /bin/sh -c "exec uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-access-log" &
+# Only known proxies are trusted to forward headers: Nginx (127.0.0.1) and Railway's edge, which sits in the
+# shared address range 100.64.0.0/10 (override with CDP_TRUSTED_PROXIES on another host). Uvicorn walks
+# X-Forwarded-For from the right, skips trusted proxies and takes the first other address, so a client can't
+# pick its own address to dodge the rate limits. Uvicorn's access log is off because it prints query
+# strings (which can hold emails); the app logs each request itself without them.
+TRUSTED_PROXIES="${CDP_TRUSTED_PROXIES:-127.0.0.1,100.64.0.0/10}"
+su cdp -s /bin/sh -c "exec uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips='$TRUSTED_PROXIES' --no-access-log" &
 API_PID=$!
 nginx -g 'daemon off;' &
 NGINX_PID=$!
