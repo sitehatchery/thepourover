@@ -9,7 +9,7 @@ import SegmentPicker from '../components/SegmentPicker'
 import { PERSON_COLUMNS } from '../components/personColumns'
 import { dateRangeInvalid, getToday, shortDate } from '../lib/format'
 import { useLookups, type Lookups } from '../lib/useLookups'
-import { PAGE_SIZE, useListQuery, type Changes } from '../lib/useListQuery'
+import { PAGE_SIZE, differsFromApplied, useListQuery, type Changes } from '../lib/useListQuery'
 import './TablePage.css'
 
 const FILTER_KEYS = ['email', 'app_user_id', 'status', 'acquisition_source', 'signup_from', 'signup_to', 'today', 'segment_id'] as const
@@ -84,6 +84,10 @@ function SubscriberFilters({ params, hasFilters, lookups, onApply, onClear }: Fi
   const [to, setTo] = useState(read('signup_to'))
   const [segments, setSegments] = useState(params.getAll('segment_id'))
   const today = params.get('today') === 'true'
+  const changed = differsFromApplied(
+    { email, app_user_id: appUserId, status, acquisition_source: source, signup_from: from, signup_to: to, segment_id: segments },
+    params,
+  )
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -137,7 +141,7 @@ function SubscriberFilters({ params, hasFilters, lookups, onApply, onClear }: Fi
         >
           Signed up today <span className="btn-note">{shortDate(getToday())}</span>
         </button>
-        <button type="submit" className="btn btn-primary" disabled={dateRangeInvalid(from, to)}>
+        <button type="submit" className="btn btn-primary" disabled={!changed || dateRangeInvalid(from, to)}>
           Apply filters
         </button>
         {hasFilters && (

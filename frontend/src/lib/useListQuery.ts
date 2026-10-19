@@ -15,6 +15,15 @@ type Options = {
 }
 
 export type Changes = Record<string, string | string[] | null>
+
+/** True when a filter form's values differ from what's applied in the URL (so Apply would change something). */
+export function differsFromApplied(values: Record<string, string | string[] | boolean>, params: URLSearchParams): boolean {
+  return Object.entries(values).some(([key, value]) => {
+    if (Array.isArray(value)) return [...value].sort().join('\n') !== [...params.getAll(key)].sort().join('\n')
+    if (typeof value === 'boolean') return value !== (params.get(key) === 'true')
+    return value.trim() !== (params.get(key) ?? '').trim()
+  })
+}
 type Result<T> = { query: string; page?: Page<T>; error?: string }
 
 /**

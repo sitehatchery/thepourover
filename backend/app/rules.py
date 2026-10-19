@@ -6,22 +6,29 @@ from datetime import date, datetime, timezone
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
-def normalize_email(raw: str | None) -> str | None:
-    """Trim and lowercase an email. Returns None when the value is blank or not a valid address.
+def _canonical(raw: str) -> str:
+    """The one definition of a normalized email: trimmed and lowercased."""
+    return raw.strip().lower()
 
-    This is the only place emails are normalized: the importer, webhook, search and filters all call it.
+
+def normalize_email(raw: str | None) -> str | None:
+    """Normalize a whole email. Returns None when the value is blank or not a valid address.
+
+    Every email stored goes through this: the CSV importer (subscribers, app users, web events) and the
+    admin console. The webhook carries no email; app events reach a person through user_id.
     """
     if raw is None:
         return None
-    email = raw.strip().lower()
+    email = _canonical(raw)
     if not email or not _EMAIL_PATTERN.match(email):
         return None
     return email
 
 
 def normalize_search(raw: str | None) -> str | None:
-    """Normalize a partial search term (e.g. part of an email) the same way stored values are normalized."""
-    value = (raw or "").strip().lower()
+    """Normalize a partial search term (e.g. "GMAIL.com ") exactly like stored emails, without requiring a
+    whole address. Used by profile search and every email filter."""
+    value = _canonical(raw or "")
     return value or None
 
 

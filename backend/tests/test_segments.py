@@ -178,7 +178,9 @@ def test_members_and_csv(client, auth, imported):
     assert all(i["acquisition_source"] == "X" for i in page["items"])
 
     exported = client.get("/app/segments/source_x/members?format=csv", headers=auth)
-    assert len(list(csv.DictReader(io.StringIO(exported.text)))) == 114
+    lines = exported.text.splitlines()
+    assert any(line.startswith("# Rules: Acquisition source is X") for line in lines)
+    assert len(list(csv.DictReader(line for line in lines if not line.startswith("#")))) == 114
 
 
 def test_segment_filters_on_event_lists(client, auth, session, imported):

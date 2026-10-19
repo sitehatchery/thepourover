@@ -172,6 +172,25 @@ def test_a_tool_result_containing_pii_is_withheld(session, settings, imported, m
     assert not find_pii(model.requests)
 
 
+def test_the_models_own_output_is_checked_too(session, settings, imported):
+    from app.models import Segment
+
+    definition = {"filters": [{"field": "acquisition_source", "operator": "equals", "value": "Podcast"}]}
+    model = ScriptedModel(
+        [
+            call("create_segment", {"name": "Follow up with ana@example.com", "definition": definition}),
+            answer("Done. Email ana@example.com or check u_2b6447a3."),
+        ]
+    )
+    reply = ask(session, model, "Save podcast signups", [], settings)
+
+    tool_result = json.loads(model.requests[1]["messages"][-1]["content"])
+    assert "Arguments rejected" in tool_result["error"]  # nothing was run with those arguments
+    assert session.scalar(select(Segment).where(Segment.name.like("Follow up%"))) is None
+    assert not find_pii(reply.answer) and "ana@example.com" not in reply.answer
+    assert any(step["step"] == "redacted" for step in reply.audit)
+
+
 def test_create_segment_tool_saves_a_segment(session, settings, imported):
     definition = {"filters": [{"field": "acquisition_source", "operator": "equals", "value": "Podcast"}]}
     model = ScriptedModel([call("create_segment", {"name": "Podcast people", "definition": definition}), answer("Saved.")])

@@ -30,17 +30,24 @@
   margin-right: auto;
 }
 
-/* The coral ring from the brand, drawn in CSS. */
+/* Same hover as thepourover.org: the kettle tips forward as if pouring. */
 .brand-mark {
-  display: inline-block;
+  display: block;
   flex: none;
-  border: 4px solid var(--coral);
-  border-radius: 50%;
-  transition: transform 0.3s ease;
+  transform-origin: center;
+  transition: transform 0.3s ease-in-out;
 }
 
-.brand:hover .brand-mark {
-  transform: rotate(30deg) scale(1.08);
+.brand:hover .brand-mark,
+.brand:focus-visible .brand-mark,
+.brand-mark:hover {
+  transform: rotate(30deg) scale(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark {
+    transition: none;
+  }
 }
 
 .brand-text {
@@ -123,6 +130,15 @@
 
 .brand-name {
   white-space: nowrap;
+}
+
+.footer-links {
+  display: block;
+  margin-top: 6px;
+}
+
+.footer-links a {
+  color: var(--coral-strong);
 }
 
 @media (max-width: 1180px) {

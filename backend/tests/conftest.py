@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from app.admin import admin_login_limiter
 from app.auth.api_keys import create_api_key
 from app.auth.passwords import hash_password
 from app.cli import init_db
@@ -31,6 +32,7 @@ def settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     reset_engine()
     login_limiter.reset()
     webhook_limiter.reset()
+    admin_login_limiter.reset()
     init_db()
     yield get_settings()
     reset_engine()

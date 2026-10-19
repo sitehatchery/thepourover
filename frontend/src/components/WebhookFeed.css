@@ -1,0 +1,165 @@
+.feed {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.feed-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.feed-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.feed-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.feed-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0 rgb(63 125 88 / 45%);
+  animation: feed-pulse 2s infinite;
+}
+
+.feed-dot.paused {
+  background: var(--muted);
+  animation: none;
+}
+
+@keyframes feed-pulse {
+  70% {
+    box-shadow: 0 0 0 7px rgb(63 125 88 / 0%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(63 125 88 / 0%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-dot {
+    animation: none;
+  }
+}
+
+.feed-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.feed-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 340px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+}
+
+.feed-item {
+  border-bottom: 1px solid var(--line);
+}
+
+.feed-row {
+  display: grid;
+  grid-template-columns: 90px 132px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.feed-row:hover {
+  background: var(--canvas);
+}
+
+.feed-time,
+.feed-meta {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.feed-outcome {
+  justify-self: start;
+}
+
+.feed-outcome.stored {
+  background: #eaf4ee;
+  color: var(--success);
+}
+
+.feed-outcome.duplicate {
+  background: #fbf1df;
+  color: #8a5a12;
+}
+
+.feed-outcome.rejected {
+  background: #f9e7e6;
+  color: var(--danger);
+}
+
+.feed-status {
+  opacity: 0.7;
+}
+
+.feed-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.feed-user {
+  color: var(--muted);
+}
+
+.feed-reason {
+  color: var(--danger);
+}
+
+.feed-steps {
+  padding: 4px 4px 14px 106px;
+}
+
+@media (max-width: 760px) {
+  .feed-head {
+    flex-direction: column;
+  }
+
+  .feed-row {
+    grid-template-columns: auto 1fr;
+  }
+
+  .feed-summary,
+  .feed-meta {
+    grid-column: 1 / -1;
+  }
+
+  .feed-steps {
+    padding-left: 4px;
+  }
+}

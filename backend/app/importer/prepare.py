@@ -22,6 +22,7 @@ FINGERPRINTS = {
 REQUIRED_ENTITIES = (SUBSCRIBERS, APP_USERS, WEB_EVENTS)
 ACCEPTED_MIME_TYPES = {"text/csv", "text/plain", "application/csv", "application/vnd.ms-excel"}
 STATUS_VALUES = {"active": 1, "unsubscribed": 0}
+STATUS_UNSUBSCRIBED = STATUS_VALUES["unsubscribed"]
 
 
 @dataclass
@@ -171,7 +172,7 @@ class Preparer:
         data = {
             "email": email,
             "signup_date": signup,
-            "status": STATUS_VALUES.get(status_raw, 1),
+            "status": STATUS_VALUES.get(status_raw),  # None when blank; defaulted to active after dedupe
             "acquisition_source": self._canonical_source(row["acquisition_source"]),
             "last_open_date": last_open,
         }
@@ -225,7 +226,10 @@ class Preparer:
 
     def _dedupe_subscribers(self) -> None:
         """One row per normalized email. Winner: latest last_open_date, then latest signup_date, then
-        the later row. Blank fields on the winner are filled from the other rows in the same order."""
+        the later row. Blank fields on the winner are filled from the other rows in the same order.
+
+        Status is the exception: if any row for the email says unsubscribed, the subscriber stays unsubscribed.
+        An opt-out must never be undone by a duplicate that happens to be more recent."""
         groups: dict[str, list[tuple[int, str, dict]]] = defaultdict(list)
         for order, (file, data) in enumerate(self._subscriber_rows):
             groups[data["email"]].append((order, file, data))
@@ -242,6 +246,10 @@ class Preparer:
                 for key, value in other.items():
                     if merged.get(key) is None and value is not None:
                         merged[key] = value
+            if any(data["status"] == STATUS_UNSUBSCRIBED for _o, _f, data in rows):
+                merged["status"] = STATUS_UNSUBSCRIBED
+            elif merged["status"] is None:
+                merged["status"] = STATUS_VALUES["active"]
             self.result.subscribers.append(merged)
 
     def _dedupe_app_users(self) -> None:

@@ -95,6 +95,20 @@ def test_dedupe_keeps_most_recent_open_and_fills_blanks(session, settings, csv_f
     assert source.source == "Instagram"  # ...and its blank source is filled from the other row
 
 
+def test_an_unsubscribe_on_any_duplicate_wins(session, settings, csv_folder):
+    # The unsubscribed row is older, so it loses the recency tie-break, but the opt-out must stick.
+    rows = [
+        "ana@example.com,2026-07-01,unsubscribed,Instagram,2026-08-01",
+        "ANA@example.com,2026-07-01,active,Instagram,2026-09-01",
+        "ben@example.com,2026-07-01,,Instagram,2026-08-01",
+        "ben@example.com,2026-07-01,,Instagram,2026-09-01",
+    ]
+    import_folder(session, settings, csv_folder(minimal_files(subscribers="\n".join(rows))))
+
+    status = dict(session.execute(select(Subscriber.email, Subscriber.status)).all())
+    assert status == {"ana@example.com": 0, "ben@example.com": 1}  # blank status alone still means active
+
+
 def test_web_events_backfill_by_visitor_and_link_by_email(session, settings, csv_folder):
     folder = csv_folder(
         minimal_files(

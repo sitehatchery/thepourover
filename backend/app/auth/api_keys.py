@@ -19,9 +19,13 @@ def hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
+def new_key() -> str:
+    return KEY_PREFIX + secrets.token_urlsafe(32)
+
+
 def create_api_key(session: Session, name: str) -> str:
     """Create a key and return it. This is the only time the plain key is available."""
-    key = KEY_PREFIX + secrets.token_urlsafe(32)
+    key = new_key()
     session.add(ApiClient(name=name, key_prefix=key[:12], key_hash=hash_key(key)))
     session.commit()
     return key

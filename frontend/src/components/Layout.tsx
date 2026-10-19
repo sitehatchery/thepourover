@@ -13,10 +13,12 @@ const NAV = [
   { to: '/segments', label: 'Segments' },
   { to: '/assistant', label: 'Assistant' },
   { to: '/setup', label: 'Setup' },
+  { to: '/api', label: 'API' },
 ]
 
-export function BrandMark({ size = 34 }: { size?: number }) {
-  return <span className="brand-mark" style={{ width: size, height: size }} aria-hidden="true" />
+/** The Pour Over logo. Like on thepourover.org, it tips like a kettle pouring on hover. */
+export function BrandMark({ size = 38 }: { size?: number }) {
+  return <img className="brand-mark" src="/tpo-logo.png" width={size} height={size} alt="" aria-hidden="true" />
 }
 
 export default function Layout() {
@@ -73,6 +75,21 @@ export default function Layout() {
       <footer className="site-footer">
         Prepared by Jason Cox for The Pour Over <span aria-hidden="true">|</span> October 2026{' '}
         <span aria-hidden="true">|</span> Full-stack Developer Pre-Employment Project
+        <span className="footer-links">
+          <NavLink to="/api">API guide</NavLink> <span aria-hidden="true">|</span>{' '}
+          <a href="/app/docs" target="_blank" rel="noopener">
+            API reference
+          </a>
+          {user?.is_admin && (
+            <>
+              {' '}
+              <span aria-hidden="true">|</span>{' '}
+              <a href="/app/admin/" target="_blank" rel="noopener">
+                Admin console
+              </a>
+            </>
+          )}
+        </span>
       </footer>
     </div>
   )

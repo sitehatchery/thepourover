@@ -110,9 +110,9 @@ def test_state_is_single_use(client, auth, fake_google):
     assert "google=error" in forged.headers["location"]
 
 
-def test_cancelled_consent_returns_to_setup_with_a_message(client, fake_google):
+def test_canceled_consent_returns_to_setup_with_a_message(client, fake_google):
     response = client.get("/app/integrations/google/callback?error=access_denied", follow_redirects=False)
-    assert "google=error" in response.headers["location"] and "cancelled" in response.headers["location"]
+    assert "google=error" in response.headers["location"] and "canceled" in response.headers["location"]
 
 
 def test_status_lists_the_folder(client, auth, fake_google):

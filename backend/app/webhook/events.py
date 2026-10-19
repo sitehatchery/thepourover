@@ -117,8 +117,13 @@ def _resolve_user(session: Session, user_id: str, result: EventResult) -> None:
     user = session.get(AppUser, user_id)
     if user is None:
         # Never drop an unknown user: create a placeholder profile that a later import can complete.
-        session.add(AppUser(app_user_id=user_id, is_placeholder=True))
-        session.flush()
+        # A savepoint, because two first events for the same new user can arrive at the same moment.
+        try:
+            with session.begin_nested():
+                session.add(AppUser(app_user_id=user_id, is_placeholder=True))
+        except IntegrityError:
+            result.steps.append(f"User {user_id} found (created by a simultaneous event)")
+            return
         result.placeholder_created = True
         result.steps.append(f"Unknown user {user_id}: placeholder profile created")
     elif user.subscriber_id is not None:

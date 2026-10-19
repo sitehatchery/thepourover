@@ -112,3 +112,17 @@ export type ImportRun = {
 }
 
 export type CurrentUser = { kind: string; id: number; name: string; is_admin: boolean }
+
+export type WebhookCall = {
+  webhook_call_id: number
+  received_at: string
+  channel: 'webhook' | 'app'
+  outcome: 'stored' | 'duplicate' | 'rejected'
+  http_status: number
+  event_id: string | null
+  event: string | null
+  app_user_id: string | null
+  device_id: string | null
+  steps: string[]
+  duration_ms: number
+}

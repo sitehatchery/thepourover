@@ -9,6 +9,7 @@ from app.assistant.tools import create_segment, results
 from app.auth.deps import require_auth
 from app.config import get_settings
 from app.db import get_session
+from app.queries.export_notes import export_notes
 from app.queries.listing import ListParams, csv_response, list_params, paginate
 from app.queries.people_rows import PEOPLE_COLUMNS, person_row
 from app.segments.engine import condition
@@ -84,5 +85,5 @@ def result_rows(result_id: str, params: ListParams = Depends(list_params), sessi
     rank = stored["rank_by"]
     stmt = stmt.order_by(people.c[rank].desc().nulls_last() if rank else people.c.profile_id, people.c.profile_id)
     if params.format == "csv":
-        return csv_response(stmt, PEOPLE_COLUMNS, person_row, "assistant_list")
+        return csv_response(stmt, PEOPLE_COLUMNS, person_row, "assistant_list", export_notes(params.request, session, "Assistant list", [f"List: {stored['title']}"]))
     return {**paginate(session, stmt, params, person_row), "title": stored["title"], "rank_by": rank}

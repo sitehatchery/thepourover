@@ -133,16 +133,20 @@ def ask(session: Session, model: ChatModel, question: str, history: list[dict], 
 
         reply = model.complete(messages, tools)
         if not reply.tool_calls:
-            answer = reply.content or "I couldn't find an answer to that."
+            # The model never receives personal data, but its words are checked on the way out as well.
+            answer, answer_redacted = redact(reply.content or "I couldn't find an answer to that.")
+            if answer_redacted:
+                audit.append({"step": "redacted", "detail": "Something in the answer looked like an email or an id, so it was removed."})
             audit.append({"step": "answer", "content": answer})
             return AssistantReply(answer, attachments, audit, was_redacted)
 
+        # The model's own words go back into the conversation, so they get the same redaction as the question.
         messages.append(
             {
                 "role": "assistant",
-                "content": reply.content,
+                "content": redact(reply.content)[0] if reply.content else reply.content,
                 "tool_calls": [
-                    {"id": c.id, "type": "function", "function": {"name": c.name, "arguments": c.arguments}}
+                    {"id": c.id, "type": "function", "function": {"name": c.name, "arguments": redact(c.arguments or "")[0]}}
                     for c in reply.tool_calls
                 ],
             }
@@ -164,6 +168,9 @@ def _run_tool(session: Session, call: ToolCall) -> dict:
         arguments = json.loads(call.arguments or "{}")
         if not isinstance(arguments, dict):
             raise ToolError("Arguments must be a JSON object")
+        # The model's own arguments are checked before anything runs (a segment name or rule is saved).
+        if find_pii(arguments):
+            raise ToolError("Arguments rejected: they look like they contain an email or an id.")
         result = call_tool(session, call.name, arguments)
     except (ToolError, ValueError, TypeError) as exc:
         session.rollback()

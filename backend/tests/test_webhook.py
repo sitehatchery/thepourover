@@ -175,3 +175,130 @@ def test_in_app_sender_requires_auth_and_uses_the_webhook(client, auth, session)
     assert response.status_code == 200
     assert "Signature verified" in response.json()["steps"]
     assert session.get(AppEvent, "evt_1") is not None
+
+
+# ---- call log (live feed) -----------------------------------------------------------------------
+
+
+def test_feed_logs_stored_duplicate_and_rejected_calls(client, auth, send_webhook):
+    send_webhook(event("evt_1", "u_new"))
+    send_webhook(event("evt_1", "u_new"))
+    send_webhook({**event("evt_2"), "unexpected": "jane@example.com"})
+    body = json.dumps(event("evt_3", "u_secret_user")).encode()
+    client.post("/app/webhooks/app", content=body, headers=sign(body, "wrong_secret"))
+
+    assert client.get("/app/webhook_calls").status_code == 401
+    calls = client.get("/app/webhook_calls", headers=auth).json()
+
+    assert [c["outcome"] for c in calls] == ["rejected", "rejected", "duplicate", "stored"]
+    assert [c["http_status"] for c in calls] == [401, 400, 200, 200]
+    stored = calls[-1]
+    assert stored["event_id"] == "evt_1" and stored["app_user_id"] == "u_new" and stored["channel"] == "webhook"
+    assert stored["steps"][0] == "Received" and stored["steps"][-1] == "Stored"
+
+
+def test_rejected_calls_keep_the_reason_not_the_payload(client, auth, send_webhook):
+    send_webhook({**event("evt_2"), "unexpected": "jane@example.com"})
+    body = json.dumps(event("evt_3", "u_secret_user")).encode()
+    client.post("/app/webhooks/app", content=body, headers=sign(body, "wrong_secret"))
+
+    calls = client.get("/app/webhook_calls", headers=auth).json()
+    text = json.dumps(calls)
+    for leaked in ("jane@example.com", "unexpected\"", "evt_2", "evt_3", "u_secret_user", "d_1"):
+        assert leaked not in text
+    assert calls[0]["steps"][-1].startswith("Rejected: ")
+    assert calls[1]["steps"][-1] == "Rejected: invalid unexpected field"
+
+
+def test_feed_polls_for_newer_calls_and_the_app_channel(client, auth, send_webhook):
+    send_webhook(event("evt_1"))
+    newest = client.get("/app/webhook_calls", headers=auth).json()[0]["webhook_call_id"]
+    assert client.get(f"/app/webhook_calls?after={newest}", headers=auth).json() == []
+
+    client.post("/app/app_events/send", json=event("evt_2"), headers=auth)
+    newer = client.get(f"/app/webhook_calls?after={newest}", headers=auth).json()
+    assert [(c["event_id"], c["channel"]) for c in newer] == [("evt_2", "app")]
+
+
+def test_call_log_keeps_the_most_recent_calls(session, monkeypatch):
+    from app.models import WebhookCall
+    from app.webhook import log
+
+    monkeypatch.setattr(log, "KEEP_CALLS", 3)
+    for _ in range(5):
+        log.record_call(session, "webhook", 401, ["Received", "Rejected: bad"], 1)
+
+    ids = session.scalars(select(WebhookCall.webhook_call_id).order_by(WebhookCall.webhook_call_id)).all()
+    assert ids == [3, 4, 5]
+
+
+# ---- re-importing the CSVs after webhook traffic ------------------------------------------------
+
+
+def _import(session, settings, folder):
+    from app.importer.service import run_import
+    from app.importer.sources import LocalFolderSource
+
+    run = run_import(session, LocalFolderSource(folder), settings)
+    session.expire_all()
+    return run
+
+
+def _files(app_users: str) -> dict[str, str]:
+    return {
+        "subscribers.csv": "email,signup_date,status,acquisition_source,last_open_date\nana@example.com,2026-07-01,active,Instagram,2026-09-01",
+        "app_users.csv": f"user_id,email,created_at\n{app_users}",
+        "web_events.csv": "visitor_id,page,timestamp,utm_source,email\nv_1,/,2026-09-01T10:00:00Z,,",
+    }
+
+
+def test_reimport_keeps_webhook_events_and_links(send_webhook, session, settings):
+    _import(session, settings, settings.import_source_dir)
+    send_webhook(event("evt_known", "u_2b6447a3"))
+    send_webhook(event("evt_new", "u_never_seen", device_id="d_2"))
+
+    _import(session, settings, settings.import_source_dir)
+
+    assert session.get(AppEvent, "evt_known").app_user_id == "u_2b6447a3"
+    assert session.get(AppEvent, "evt_new").app_user_id == "u_never_seen"
+    known = session.get(AppUser, "u_2b6447a3")
+    assert known.subscriber_id is not None and not known.is_placeholder  # relinked to the new subscriber rows
+    assert session.get(AppUser, "u_never_seen").is_placeholder  # still not in the file, still kept
+
+
+def test_import_completes_a_placeholder(send_webhook, session, settings, csv_folder):
+    send_webhook(event("evt_1", "u_new"))
+    assert session.get(AppUser, "u_new").is_placeholder
+
+    _import(session, settings, csv_folder(_files("u_new,Ana@Example.com,2026-08-01")))
+
+    user = session.get(AppUser, "u_new")
+    assert not user.is_placeholder and user.email == "ana@example.com" and user.created_at == date(2026, 8, 1)
+    assert session.get(Subscriber, user.subscriber_id).email == "ana@example.com"
+    assert session.get(AppEvent, "evt_1").app_user_id == "u_new"
+
+
+def test_users_dropped_from_the_file_are_kept_only_if_they_have_events(send_webhook, session, settings, csv_folder):
+    _import(session, settings, csv_folder(_files("u_active,ana@example.com,2026-08-01\nu_idle,ben@example.com,2026-08-01")))
+    send_webhook(event("evt_1", "u_active"))
+
+    _import(session, settings, csv_folder(_files("")))
+
+    assert session.get(AppUser, "u_idle") is None
+    kept = session.get(AppUser, "u_active")
+    assert kept.is_placeholder and kept.subscriber_id is not None  # ana is still a subscriber, so still linked
+    assert session.get(AppEvent, "evt_1").app_user_id == "u_active"
+
+
+def test_simultaneous_first_events_for_a_new_user_dont_fail(session, monkeypatch):
+    from app.webhook.events import EventResult, _resolve_user
+
+    session.add(AppUser(app_user_id="u_race", is_placeholder=True))  # created by the other request...
+    session.commit()
+    monkeypatch.setattr(session, "get", lambda *a, **k: None)  # ...after this request looked and found nothing
+
+    result = EventResult(status="stored", event_id="evt_1")
+    _resolve_user(session, "u_race", result)
+
+    assert not result.placeholder_created and "simultaneous" in result.steps[-1]
+    session.commit()  # the outer transaction is still usable

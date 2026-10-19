@@ -1,0 +1,1050 @@
+{
+  "info": {
+    "name": "The Pour Over Mini CDP",
+    "description": "Calls for the Mini CDP API. Set baseUrl, username, password and webhookSecret in a Postman environment (mark password and webhookSecret as secret), run 'Sign in', and every other request uses the token it saves. To use an API key instead, paste it into bearerToken. API keys are created, rotated and revoked in the admin console (/app/admin), not through the API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://thepourover.seedcast.ai"
+    },
+    {
+      "key": "bearerToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "deviceId",
+      "value": "d_postman1"
+    },
+    {
+      "key": "userId",
+      "value": "u_2b6447a3"
+    },
+    {
+      "key": "segmentSlug",
+      "value": "instagram_not_opened_30_days"
+    },
+    {
+      "key": "profileId",
+      "value": "s_1"
+    },
+    {
+      "key": "lastEventId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Sign-in",
+      "item": [
+        {
+          "name": "Health (no sign-in)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "health"
+              ]
+            },
+            "description": "Service status and the configured 'today'.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Sign in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/app/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Saves the access token (15 minutes) and refresh token into the collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const tokens = pm.response.json();",
+                  "  pm.collectionVariables.set('bearerToken', tokens.access_token);",
+                  "  pm.collectionVariables.set('refreshToken', tokens.refresh_token);",
+                  "}",
+                  "pm.test('Signed in', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/app/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Swaps the refresh token for a new pair. Each refresh token works once.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const tokens = pm.response.json();",
+                  "  pm.collectionVariables.set('bearerToken', tokens.access_token);",
+                  "  pm.collectionVariables.set('refreshToken', tokens.refresh_token);",
+                  "}",
+                  "pm.test('Signed in', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Who am I",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "auth",
+                "me"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Sign out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/app/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Ends the sign-in: the refresh token and every token rotated from it stop working.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Subscribers and profiles",
+      "item": [
+        {
+          "name": "Subscribers (filtered)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/subscribers?status=active&segment_id={{segmentSlug}}&sort=signup_date&order=desc&page_size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "subscribers"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "segment_id",
+                  "value": "{{segmentSlug}}"
+                },
+                {
+                  "key": "sort",
+                  "value": "signup_date"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Subscribers as CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/subscribers?segment_id={{segmentSlug}}&format=csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "subscribers"
+              ],
+              "query": [
+                {
+                  "key": "segment_id",
+                  "value": "{{segmentSlug}}"
+                },
+                {
+                  "key": "format",
+                  "value": "csv"
+                }
+              ]
+            },
+            "description": "Every matching row as CSV, with # notes at the top."
+          }
+        },
+        {
+          "name": "Search people",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/profiles/search?q=julia",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "profiles",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "julia"
+                }
+              ]
+            },
+            "description": "Part of an email, an app user id or a visitor id."
+          }
+        },
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/profiles/{{profileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "profiles",
+                "{{profileId}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Profile web events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/profiles/{{profileId}}/web_events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "profiles",
+                "{{profileId}}",
+                "web_events"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Profile app events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/profiles/{{profileId}}/app_events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "profiles",
+                "{{profileId}}",
+                "app_events"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Events",
+      "item": [
+        {
+          "name": "Web events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/web_events?page_path=/subscribe&page_size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "web_events"
+              ],
+              "query": [
+                {
+                  "key": "page_path",
+                  "value": "/subscribe"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "App events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/app_events?page_size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "app_events"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Webhook call log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/webhook_calls?limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "webhook_calls"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "The live feed: every webhook call with its steps."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Webhook (signed, no sign-in)",
+      "description": "Run these in order to see stitching: anonymous, then login (attaches it), then a duplicate, then a bad signature. e sends an earlier event late (out of order); f uses a user_id never seen before.",
+      "item": [
+        {
+          "name": "a. Anonymous app_open",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"auto\",\n  \"event\": \"app_open\",\n  \"user_id\": null,\n  \"device_id\": \"{{deviceId}}\",\n  \"timestamp\": \"auto\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "b. Login (attaches earlier events)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"auto\",\n  \"event\": \"login\",\n  \"user_id\": \"{{userId}}\",\n  \"device_id\": \"{{deviceId}}\",\n  \"timestamp\": \"auto\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "c. Same event again (duplicate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "Re-sends the previous event_id: returns status 'duplicate' and changes nothing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"last\",\n  \"event\": \"login\",\n  \"user_id\": \"{{userId}}\",\n  \"device_id\": \"{{deviceId}}\",\n  \"timestamp\": \"auto\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "d. Bad signature (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Demo-Bad-Signature",
+                "value": "1",
+                "description": "Tells the script to sign with a wrong secret; removed before sending."
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"auto\",\n  \"event\": \"app_open\",\n  \"user_id\": null,\n  \"device_id\": \"{{deviceId}}\",\n  \"timestamp\": \"auto\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "e. Late anonymous event (out of order)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "An anonymous event from earlier today that arrives after the login (send after b). It attaches to the user who logged in on this device later.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"auto\",\n  \"event\": \"app_open\",\n  \"user_id\": null,\n  \"device_id\": \"{{deviceId}}\",\n  \"timestamp\": \"2026-09-28T00:00:01Z\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "f. Unknown user_id (placeholder profile)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "app"
+              ]
+            },
+            "description": "A login from a user_id the CDP has never seen. It gets a placeholder profile instead of being dropped; search for the id in the app to open it.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"auto\",\n  \"event\": \"login\",\n  \"user_id\": \"new\",\n  \"device_id\": \"d_newphone\",\n  \"timestamp\": \"auto\",\n  \"properties\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Signs the request like the mobile app's backend would: HMAC-SHA256 of \"{timestamp}.{raw body}\".",
+                  "// \"auto\" fills in a fresh event_id or a timestamp on the brief's \"today\"; \"last\" reuses the previous event_id; \"new\" makes up a user_id.",
+                  "const secret = pm.request.headers.has('X-Demo-Bad-Signature') ? 'wrong-secret' : pm.variables.get('webhookSecret');",
+                  "if (!secret) { throw new Error('Set webhookSecret in your Postman environment first.'); }",
+                  "const event = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "if (event.event_id === 'auto') { event.event_id = 'evt_' + Date.now().toString(36); }",
+                  "if (event.event_id === 'last') { event.event_id = pm.collectionVariables.get('lastEventId'); }",
+                  "if (event.user_id === 'new') { event.user_id = 'u_new_' + Date.now().toString(36); }",
+                  "if (event.timestamp === 'auto') { event.timestamp = '2026-09-28T' + new Date().toISOString().slice(11, 19) + 'Z'; }",
+                  "pm.collectionVariables.set('lastEventId', event.event_id);",
+                  "const body = JSON.stringify(event);",
+                  "pm.request.body.update({ mode: 'raw', raw: body, options: { raw: { language: 'json' } } });",
+                  "pm.request.headers.remove('X-Demo-Bad-Signature');",
+                  "const ts = Math.floor(Date.now() / 1000).toString();",
+                  "const signature = CryptoJS.HmacSHA256(ts + '.' + body, secret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Timestamp', value: ts });",
+                  "pm.request.headers.upsert({ key: 'X-CDP-Signature', value: 'sha256=' + signature });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Segments",
+      "item": [
+        {
+          "name": "List segments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/segments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "segments"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Field schema",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/segments/schema",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "segments",
+                "schema"
+              ]
+            },
+            "description": "Every field, operator and allowed value."
+          }
+        },
+        {
+          "name": "Preview a definition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/app/segments/preview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "segments",
+                "preview"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"match\": \"all\",\n  \"filters\": [\n    {\n      \"field\": \"acquisition_source\",\n      \"operator\": \"equals\",\n      \"value\": \"Instagram\"\n    },\n    {\n      \"field\": \"last_open_date\",\n      \"operator\": \"not_within_last_days\",\n      \"value\": 30\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create a segment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/app/segments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "segments"
+              ]
+            },
+            "description": "Returns 409 if the name is taken; rename it to run again.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman test segment\",\n  \"description\": \"Created from Postman\",\n  \"group\": \"subscriber\",\n  \"definition\": {\n    \"match\": \"all\",\n    \"filters\": [\n      {\n        \"field\": \"acquisition_source\",\n        \"operator\": \"equals\",\n        \"value\": \"Instagram\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Segment members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/segments/{{segmentSlug}}/members?page_size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "segments",
+                "{{segmentSlug}}",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "Segment count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app/segments/{{segmentSlug}}/count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "segments",
+                "{{segmentSlug}}",
+                "count"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Assistant",
+      "item": [
+        {
+          "name": "Ask a question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/app/assistant/ask",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app",
+                "assistant",
+                "ask"
+              ]
+            },
+            "description": "Calls OpenAI; takes 10-20 seconds. The response includes the audit of exactly what the model saw.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"How many Instagram signups went cold last month?\",\n  \"history\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
