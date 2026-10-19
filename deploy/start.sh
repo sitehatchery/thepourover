@@ -13,7 +13,7 @@ su cdp -s /bin/sh -c "python -m app.cli init-db"
 
 # First sign-in: CDP_INITIAL_USER + CDP_INITIAL_PASSWORD create (or reset) that user on start-up.
 if [ -n "${CDP_INITIAL_USER:-}" ] && [ -n "${CDP_INITIAL_PASSWORD:-}" ]; then
-    su cdp -s /bin/sh -c "python -m app.cli create-user \"$CDP_INITIAL_USER\" --admin" >/dev/null
+    su cdp -s /bin/sh -c "python -m app.cli create-user \"$CDP_INITIAL_USER\" --admin --password-from-env" >/dev/null
     echo "Ensured user $CDP_INITIAL_USER exists"
 fi
 
@@ -24,13 +24,11 @@ fi
 
 envsubst '${PORT}' < /etc/nginx/templates/cdp.conf.template > /etc/nginx/conf.d/cdp.conf
 
-# Only known proxies are trusted to forward headers: Nginx (127.0.0.1) and Railway's edge, which sits in the
-# shared address range 100.64.0.0/10 (override with CDP_TRUSTED_PROXIES on another host). Uvicorn walks
-# X-Forwarded-For from the right, skips trusted proxies and takes the first other address, so a client can't
-# pick its own address to dodge the rate limits. Uvicorn's access log is off because it prints query
-# strings (which can hold emails); the app logs each request itself without them.
-TRUSTED_PROXIES="${CDP_TRUSTED_PROXIES:-127.0.0.1,100.64.0.0/10}"
-su cdp -s /bin/sh -c "exec uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips='$TRUSTED_PROXIES' --no-access-log" &
+# Only Nginx (127.0.0.1) is trusted to forward the client address, and it forwards only the address the
+# platform's proxy verified (see the Nginx config), so a client can't pick its own address to dodge the
+# rate limits. Uvicorn's access log is off because it prints query strings (which can hold emails); the app
+# logs each request itself without them.
+su cdp -s /bin/sh -c "exec uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-access-log" &
 API_PID=$!
 nginx -g 'daemon off;' &
 NGINX_PID=$!

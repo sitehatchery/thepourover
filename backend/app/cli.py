@@ -36,9 +36,12 @@ def init_db() -> None:
     print("Database ready:", settings.resolved_database_url, f"({added} catalog segments added)")
 
 
-def _read_password() -> str:
-    # CDP_INITIAL_PASSWORD lets a deploy script create the first user without a prompt.
-    password = os.environ.get("CDP_INITIAL_PASSWORD") or getpass.getpass("Password: ")
+def _read_password(from_env: bool) -> str:
+    # Only the start-up script reads CDP_INITIAL_PASSWORD (it passes --password-from-env). Otherwise always
+    # prompt: that variable holds the first admin's password, and must never become another user's.
+    password = os.environ.get("CDP_INITIAL_PASSWORD", "") if from_env else getpass.getpass("Password: ")
+    if from_env and not password:
+        raise SystemExit("--password-from-env needs CDP_INITIAL_PASSWORD to be set")
     if len(password) < MIN_PASSWORD_LENGTH:
         raise SystemExit(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
     return password
@@ -52,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     user = sub.add_parser("create-user", help="create a UI user, or reset the password of an existing one")
     user.add_argument("username")
     user.add_argument("--admin", action="store_true")
+    user.add_argument("--password-from-env", action="store_true", help="read the password from CDP_INITIAL_PASSWORD")
     key = sub.add_parser("create-api-key", help="create an API key for an external client")
     key.add_argument("name")
     sub.add_parser("list-api-keys", help="show API keys (prefixes only)")
@@ -78,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "create-user":
             existing = session.scalar(select(User).where(User.username == args.username))
-            password_hash = hash_password(_read_password())
+            password_hash = hash_password(_read_password(args.password_from_env))
             if existing:
                 existing.password_hash = password_hash
                 existing.is_admin = existing.is_admin or args.admin

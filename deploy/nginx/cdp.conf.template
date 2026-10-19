@@ -16,7 +16,10 @@ server {
 
     # The platform's proxy terminates TLS and sets X-Forwarded-*; pass them on to the API.
     proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+    # Railway's edge always overwrites X-Real-IP with the true client address (a value the caller sends is
+    # replaced), while its X-Forwarded-For ends with the edge node's own address. So the API is given only
+    # X-Real-IP, which keeps the rate limits per client and impossible to dodge with a forged header.
+    proxy_set_header X-Forwarded-For $http_x_real_ip;
     proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
 
     # The API's interactive docs load Swagger UI from a CDN, so they get their own policy.

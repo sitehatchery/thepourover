@@ -254,7 +254,7 @@ Definitions the assistant uses (each report carries its definition, and the mode
 - **Webhook:** HMAC signatures with replay protection, secret rotation, a 16 KB body limit, strict payload validation (unknown fields and bad ids are rejected) and rate limiting.
 - **Secrets** come from environment variables only. `.env` is git-ignored. Production secrets were generated and set on Railway without being printed. Google tokens are encrypted at rest.
 - **Headers:** HSTS, a strict CSP per area (the API answers with `default-src 'none'`), `X-Frame-Options: DENY`, `nosniff`, a referrer policy and a permissions policy.
-- **Client addresses:** only Nginx is trusted to forward them, and the address is read from the end of `X-Forwarded-For` that the platform's proxy writes, so a caller can't choose an address to dodge the rate limits.
+- **Client addresses:** Railway's proxy always overwrites `X-Real-IP` with the caller's real address, so Nginx passes only that to the API, and the API trusts forwarded addresses from Nginx alone. A forged header can't dodge the rate limits (checked on the live site: 10 failed sign-ins, then 429, with forged headers too). On a host that doesn't set `X-Real-IP`, all callers share one limit: stricter, never looser.
 - **Logs:** one line per request with the route template, status, timing and request id. Query strings and raw paths are never logged, since searches carry emails; Nginx logs `$uri` only. Unhandled errors log stack frames without the exception message (SQL errors quote parameters).
 - **CSV exports** escape cells that start with `=`, `+`, `-` or `@` (formula injection).
 
