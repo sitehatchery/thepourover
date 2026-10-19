@@ -135,11 +135,11 @@ export default function SetupPage() {
           </p>
           <ul className="setup-facts">
             <li>
-              <strong>Replaces</strong> subscribers, app users, web events and app events (including events received
-              through the webhook).
+              <strong>Replaces</strong> subscribers and web events, and updates app users from the file.
             </li>
             <li>
-              <strong>Keeps</strong> segments, acquisition sources and sign-ins.
+              <strong>Keeps</strong> app events received through the webhook (placeholder profiles are completed when
+              their user is in the file), plus segments, acquisition sources and sign-ins.
             </li>
             <li>Everything is checked first and saved in one step, so a failed import leaves the current data untouched.</li>
           </ul>
@@ -262,8 +262,8 @@ export default function SetupPage() {
       <dialog ref={confirmRef} className="confirm-dialog" aria-labelledby="confirm-title">
         <h2 id="confirm-title">Replace the current data?</h2>
         <p>
-          This replaces all subscribers, app users, web events and app events with what's in the chosen source. App events
-          sent through the webhook since the last import will be removed. Segments are kept.
+          This replaces all subscribers and web events with what's in the chosen source and updates app users from it.
+          App events received through the webhook are kept, and so are segments.
         </p>
         <div className="confirm-actions">
           <button className="btn" onClick={() => confirmRef.current?.close()} autoFocus>
