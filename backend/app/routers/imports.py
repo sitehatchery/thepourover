@@ -66,9 +66,10 @@ def _project_path(folder: Path) -> str:
 def start_import(
     source: Literal["auto", "google_drive", "local"] = "auto", session: Session = Depends(get_session)
 ) -> ImportRunOut:
-    """Replace subscribers, app users, app events and web events with a fresh import.
-    Segments, sources and credentials are kept. `auto` reads Google Drive when it's connected,
-    otherwise the local drop folder."""
+    """Import the CSVs: subscribers and web events are replaced, app users are updated from the file, and app
+    events received through the webhook are kept (placeholders are completed when their user is in the file).
+    Segments, sources and credentials are kept. `auto` reads Google Drive when it's connected, otherwise the
+    local data folder."""
     settings = get_settings()
     use_drive = source == "google_drive" or (source == "auto" and google.connection(session) is not None)
     if use_drive and google.connection(session) is None:

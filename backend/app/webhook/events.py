@@ -3,7 +3,13 @@
 Stitching rule: an anonymous event (user_id null) belongs to the *next* identified event from the same
 device. So when an identified event arrives, anonymous events from that device between the previous
 identified event and this one are attached to its user; and when an anonymous event arrives late, it
-takes the user of the device's next identified event, if there is one. Arrival order doesn't matter.
+takes the user of the device's next identified event, if there is one.
+
+Late anonymous events are placed correctly whatever order they arrive in. Late *identified* events are not
+fully order-independent: an anonymous event that was already attached to a user stays with that user, even
+if an identified event for someone else turns out to sit between them (see the README's stitching limits and
+test_late_login_for_another_user_does_not_reclaim_attached_events). Fixing that would need a "stitched" flag
+on each event so attachments could be reconsidered.
 """
 
 from dataclasses import dataclass, field
