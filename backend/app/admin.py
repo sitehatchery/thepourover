@@ -12,6 +12,7 @@
 import hashlib
 import hmac
 import logging
+import secrets
 import time
 from typing import Any
 
@@ -21,6 +22,7 @@ from sqladmin.audit import AuditBackend, AuditEntry
 from sqladmin.authentication import AuthenticationBackend, get_current_user_id
 from sqladmin.filters import AllUniqueStringValuesFilter, BooleanFilter, StaticValuesFilter
 from sqladmin.secret import Secret
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
@@ -58,8 +60,13 @@ admin_login_limiter = RateLimiter(get_settings().login_attempts_per_minute)
 
 
 def _session_secret() -> str:
-    # Derived from the JWT secret so there's no extra secret to manage, but distinct from it.
-    return hmac.new(get_settings().jwt_secret.encode(), b"cdp-admin-session", hashlib.sha256).hexdigest()
+    # Derived from the JWT secret so there's no extra secret to manage, but distinct from it. Without a JWT
+    # secret, a random one per process: admin sign-ins then end on restart, but a session can't be forged.
+    jwt_secret = get_settings().jwt_secret
+    if not jwt_secret:
+        log.warning("CDP_JWT_SECRET is not set; admin sessions use a temporary random key")
+        return secrets.token_hex(32)
+    return hmac.new(jwt_secret.encode(), b"cdp-admin-session", hashlib.sha256).hexdigest()
 
 
 class AdminAuth(AuthenticationBackend):
@@ -128,6 +135,26 @@ def _normalize_email_field(data: dict, required: bool) -> None:
     data["email"] = email
 
 
+def _relink_subscriber(subscriber_id: int) -> None:
+    """Apply the import's linking rule after an admin edit: app users and web events join on email."""
+    with open_session() as session:
+        email = session.scalar(select(Subscriber.email).where(Subscriber.subscriber_id == subscriber_id))
+        for model in (AppUser, WebEvent):
+            session.execute(
+                update(model).where(model.subscriber_id == subscriber_id, model.email != email).values(subscriber_id=None)
+            )
+            session.execute(update(model).where(model.email == email).values(subscriber_id=subscriber_id))
+        session.commit()
+
+
+def _unlink_subscriber(subscriber_id: int) -> None:
+    """Keep a deleted subscriber's app users and web visits, just no longer linked to them."""
+    with open_session() as session:
+        for model in (AppUser, WebEvent):
+            session.execute(update(model).where(model.subscriber_id == subscriber_id).values(subscriber_id=None))
+        session.commit()
+
+
 class SubscriberAdmin(ModelView, model=Subscriber):
     name_plural = "Subscribers"
     icon = "fa-solid fa-envelope"
@@ -152,6 +179,12 @@ class SubscriberAdmin(ModelView, model=Subscriber):
     async def on_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
         _normalize_email_field(data, required=True)
 
+    async def after_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
+        _relink_subscriber(model.subscriber_id)
+
+    async def on_model_delete(self, model: Any, request: Request) -> None:
+        _unlink_subscriber(model.subscriber_id)
+
 
 class AppUserAdmin(ModelView, model=AppUser):
     name = "App user"
@@ -167,6 +200,12 @@ class AppUserAdmin(ModelView, model=AppUser):
 
     async def on_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
         _normalize_email_field(data, required=False)
+
+    async def after_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
+        with open_session() as session:
+            user = session.get(AppUser, model.app_user_id)
+            user.subscriber_id = session.scalar(select(Subscriber.subscriber_id).where(Subscriber.email == user.email))
+            session.commit()
 
 
 class AppEventAdmin(ModelView, model=AppEvent):

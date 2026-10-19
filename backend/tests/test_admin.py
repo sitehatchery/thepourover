@@ -122,3 +122,28 @@ def test_auth_tables_never_show_secrets(admin, session):
     assert "$argon2" not in page and "password" not in page.lower()
     assert admin.get(f"{ADMIN}/user/create").status_code in (403, 404)
     assert admin.get(f"{ADMIN}/refresh-token/list").status_code == 404
+
+
+def test_admin_email_edits_relink_app_users_and_deletes_unlink(admin, session):
+    from app.models import AppUser
+
+    session.add(AppUser(app_user_id="u_ana", email="ana@example.com"))
+    session.commit()
+    form = {"email": "Ana@Example.com", "signup_date": "2026-09-01", "status": "1"}
+    admin.post(f"{ADMIN}/subscriber/create", data=form)
+    session.expire_all()
+    subscriber_id = session.scalar(select(Subscriber.subscriber_id).where(Subscriber.email == "ana@example.com"))
+    assert session.get(AppUser, "u_ana").subscriber_id == subscriber_id  # linked on create
+
+    admin.post(f"{ADMIN}/subscriber/edit/{subscriber_id}", data={**form, "email": "ana.new@example.com"})
+    session.expire_all()
+    assert session.get(AppUser, "u_ana").subscriber_id is None  # the email no longer matches
+
+    admin.post(f"{ADMIN}/app-user/edit/u_ana", data={"app_user_id": "u_ana", "email": "ANA.NEW@example.com", "created_at": ""})
+    session.expire_all()
+    assert session.get(AppUser, "u_ana").subscriber_id == subscriber_id  # linked from the app user's side
+
+    admin.delete(f"{ADMIN}/subscriber/delete?pks={subscriber_id}")
+    session.expire_all()
+    assert session.get(Subscriber, subscriber_id) is None
+    assert session.get(AppUser, "u_ana").subscriber_id is None  # kept, just unlinked
