@@ -56,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
     user.add_argument("username")
     user.add_argument("--admin", action="store_true")
     user.add_argument("--password-from-env", action="store_true", help="read the password from CDP_INITIAL_PASSWORD")
+    user.add_argument("--if-missing", action="store_true", help="do nothing if the user already exists (for start-up)")
     key = sub.add_parser("create-api-key", help="create an API key for an external client")
     key.add_argument("name")
     sub.add_parser("list-api-keys", help="show API keys (prefixes only)")
@@ -82,6 +83,9 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "create-user":
             existing = session.scalar(select(User).where(User.username == args.username))
+            if existing and args.if_missing:
+                print(f"User {args.username} already exists; left unchanged")
+                return 0
             password_hash = hash_password(_read_password(args.password_from_env))
             if existing:
                 existing.password_hash = password_hash
