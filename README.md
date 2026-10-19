@@ -273,7 +273,7 @@ Definitions the assistant uses (each report carries its definition, and the mode
 
 ## Deployment (Railway)
 
-One container (`Dockerfile`). The SQLite database and import reports live on a volume at `/data`. `deploy/start.sh` runs migrations, creates the first admin from `CDP_INITIAL_USER` / `CDP_INITIAL_PASSWORD`, loads the sample data the first time, then supervises uvicorn and Nginx (if either exits, the container exits and Railway restarts it). `railway.json` sets the Dockerfile build and the `/app/health` health check. Pushing `feature/foundation` deploys.
+One container (`Dockerfile`). The SQLite database and import reports live on a volume at `/data`. `deploy/start.sh` runs migrations, creates the first admin from `CDP_INITIAL_USER` / `CDP_INITIAL_PASSWORD` on the first start only (later starts leave the account alone, so a changed password sticks and the variable can be removed), loads the sample data the first time, then supervises uvicorn and Nginx (if either exits, the container exits and Railway restarts it). `railway.json` sets the Dockerfile build and the `/app/health` health check. Merging into `main` deploys.
 
 Service variables: `CDP_JWT_SECRET`, `CDP_WEBHOOK_SECRETS`, `CDP_INITIAL_USER`, `CDP_INITIAL_PASSWORD`, `OPENAI_API_KEY`, `GOOGLE_OAUTH_CLIENT`, `GOOGLE_OAUTH_SECRET`, `CDP_APP_ORIGINS` (the public URL) and `CDP_GOOGLE_REDIRECT_URI` (`https://<public URL>/app/integrations/google/callback`, also registered in Google Cloud).
 

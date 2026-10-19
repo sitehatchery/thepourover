@@ -11,10 +11,10 @@ chown -R cdp /data
 # Migrations and reference data (idempotent).
 su cdp -s /bin/sh -c "python -m app.cli init-db"
 
-# First sign-in: CDP_INITIAL_USER + CDP_INITIAL_PASSWORD create (or reset) that user on start-up.
+# First sign-in: CDP_INITIAL_USER + CDP_INITIAL_PASSWORD create that admin on the first start only. Once the
+# user exists, start-up leaves it alone, so a changed password sticks; CDP_INITIAL_PASSWORD can then be removed.
 if [ -n "${CDP_INITIAL_USER:-}" ] && [ -n "${CDP_INITIAL_PASSWORD:-}" ]; then
-    su cdp -s /bin/sh -c "python -m app.cli create-user \"$CDP_INITIAL_USER\" --admin --password-from-env" >/dev/null
-    echo "Ensured user $CDP_INITIAL_USER exists"
+    su cdp -s /bin/sh -c "python -m app.cli create-user \"$CDP_INITIAL_USER\" --admin --password-from-env --if-missing"
 fi
 
 # Load the sample data the first time the database is empty, so a fresh deploy has something to show.

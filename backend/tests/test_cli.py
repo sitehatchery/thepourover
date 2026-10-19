@@ -37,3 +37,21 @@ def test_password_from_env_without_the_variable_stops(settings, monkeypatch):
     monkeypatch.delenv("CDP_INITIAL_PASSWORD", raising=False)
     with pytest.raises(SystemExit):
         cli.main(["create-user", "jason", "--password-from-env"])
+
+
+def test_start_up_leaves_an_existing_admin_alone(settings, session, monkeypatch):
+    # Start-up runs this on every boot; a password changed since the first start must survive a restart.
+    monkeypatch.setattr(cli.getpass, "getpass", lambda prompt="": "changed-since-first-start")
+    cli.main(["create-user", "jason", "--admin"])
+    monkeypatch.setenv("CDP_INITIAL_PASSWORD", ADMIN_PASSWORD)
+
+    assert cli.main(["create-user", "jason", "--admin", "--password-from-env", "--if-missing"]) == 0
+
+    stored = password_hash(session, "jason")
+    assert verify_password("changed-since-first-start", stored) and not verify_password(ADMIN_PASSWORD, stored)
+
+
+def test_if_missing_still_creates_a_new_user(settings, session, monkeypatch):
+    monkeypatch.setenv("CDP_INITIAL_PASSWORD", ADMIN_PASSWORD)
+    assert cli.main(["create-user", "jason", "--admin", "--password-from-env", "--if-missing"]) == 0
+    assert verify_password(ADMIN_PASSWORD, password_hash(session, "jason"))

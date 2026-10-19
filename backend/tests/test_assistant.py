@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.assistant import tools
 from app.assistant.agent import ModelReply, ToolCall, ask
@@ -229,3 +229,16 @@ def test_ask_without_a_key_explains_how_to_configure(client, auth, monkeypatch):
 def test_assistant_requires_auth(client):
     assert client.post("/app/assistant/ask", json={"question": "hi"}).status_code == 401
     assert client.get("/app/assistant/results/rabc").status_code == 401
+
+
+def test_cold_by_source_matches_the_gone_cold_segment(session, settings, imported):
+    from app.segments.service import definition_of, get_segment, members
+
+    report = tools.run_report(session, "cold_by_source")
+    _people, stmt = members(definition_of(get_segment(session, "gone_cold")))
+    segment_count = session.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    assert report["total"] == segment_count  # one definition of "gone cold", wherever it's asked
+    assert "signed up more than 30 days ago" in report["definition"]
+    august = tools.run_report(session, "cold_by_source", signup_from="2026-08-01", signup_to="2026-08-31")
+    assert "signed up in the period asked about" in august["definition"]

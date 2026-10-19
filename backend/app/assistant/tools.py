@@ -186,15 +186,25 @@ def _report_cold_by_source(session: Session, days_without_open: int = 30, signup
         func.count(),
         func.sum(case((cold, 1), else_=0)),
     ).where(people.c.is_subscriber == 1, people.c.status == 1)
-    if start := _day(signup_from, "signup_from"):
+    start, end = _day(signup_from, "signup_from"), _day(signup_to, "signup_to")
+    if start:
         stmt = stmt.where(people.c.signup_date >= start)
-    if end := _day(signup_to, "signup_to"):
+    if end:
         stmt = stmt.where(people.c.signup_date <= end)
+    if start or end:
+        signup_rule = "who signed up in the period asked about"
+    else:
+        # Same rule as the "Gone cold" segment and the system prompt: too new to have gone cold doesn't count.
+        stmt = stmt.where(people.c.signup_date < since)
+        signup_rule = f"who signed up more than {days_without_open} days ago"
     rows = session.execute(stmt.group_by(people.c.acquisition_source)).all()
     out = sorted(([s or "(unknown)", total, int(c or 0), _pct(int(c or 0), total)] for s, total, c in rows), key=lambda r: -r[2])
     return {
         "title": f"Active subscribers with no open in {days_without_open} days, by source",
-        "definition": f"Gone cold = still subscribed, with no newsletter open in the last {days_without_open} days (including never opened).",
+        "definition": (
+            f"Gone cold = still subscribed, {signup_rule}, with no newsletter open in the last "
+            f"{days_without_open} days (including never opened)."
+        ),
         "columns": ["source", "active_subscribers", "gone_cold", "percent_cold"],
         "rows": out,
         "total": sum(r[2] for r in out),

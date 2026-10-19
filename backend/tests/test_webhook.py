@@ -302,3 +302,18 @@ def test_simultaneous_first_events_for_a_new_user_dont_fail(session, monkeypatch
 
     assert not result.placeholder_created and "simultaneous" in result.steps[-1]
     session.commit()  # the outer transaction is still usable
+
+
+def test_late_login_for_another_user_does_not_reclaim_attached_events(send_webhook, session):
+    """A known limit, pinned down so it can't change unnoticed (README: stitching limits).
+
+    Delivered in time order, e1 would go to u_A (A logs in at 11:00, right after it). Here A's login arrives
+    last; by then e1 has already been attached to u_B, and attached events are never reconsidered.
+    """
+    send_webhook(event("evt_e1", None, ts="2026-09-28T10:00:00Z"))
+    send_webhook(event("evt_e3", None, ts="2026-09-28T12:00:00Z"))
+    send_webhook(event("evt_login_b", "u_B", ts="2026-09-28T13:00:00Z", kind="login"))
+    send_webhook(event("evt_login_a", "u_A", ts="2026-09-28T11:00:00Z", kind="login"))
+
+    assert user_of(session, "evt_e3") == "u_B"
+    assert user_of(session, "evt_e1") == "u_B"  # in-order delivery would give u_A
