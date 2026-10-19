@@ -13,7 +13,7 @@ su cdp -s /bin/sh -c "python -m app.cli init-db"
 
 # First sign-in: CDP_INITIAL_USER + CDP_INITIAL_PASSWORD create (or reset) that user on start-up.
 if [ -n "${CDP_INITIAL_USER:-}" ] && [ -n "${CDP_INITIAL_PASSWORD:-}" ]; then
-    su cdp -s /bin/sh -c "python -m app.cli create-user \"$CDP_INITIAL_USER\" --admin" >/dev/null
+    su cdp -s /bin/sh -c "python -m app.cli create-user \"$CDP_INITIAL_USER\" --admin --password-from-env" >/dev/null
     echo "Ensured user $CDP_INITIAL_USER exists"
 fi
 
