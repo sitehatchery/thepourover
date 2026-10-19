@@ -64,7 +64,7 @@ export default function WebhookFeed({ onNewEvents, refreshKey }: { onNewEvents: 
           </h2>
           <p>
             Every call to <code>POST /webhooks/app</code>, including rejected ones. Rejected calls keep the reason, never the
-            payload.
+            payload. Times are UTC.
           </p>
         </div>
         <button type="button" className="btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)}>
@@ -88,7 +88,7 @@ export default function WebhookFeed({ onNewEvents, refreshKey }: { onNewEvents: 
                   onClick={() => setOpen(expanded ? null : call.webhook_call_id)}
                 >
                   <time className="feed-time" dateTime={call.received_at}>
-                    {new Date(`${call.received_at}Z`).toLocaleTimeString()}
+                    {call.received_at.slice(11, 19)}
                   </time>
                   <span className={`pill feed-outcome ${call.outcome}`}>
                     {OUTCOME_LABEL[call.outcome]} <span className="feed-status">{call.http_status}</span>

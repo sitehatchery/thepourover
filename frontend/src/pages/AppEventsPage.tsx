@@ -31,7 +31,7 @@ const COLUMNS: Column<AppEventRow>[] = [
   { key: 'device_id', label: 'Device ID', render: (e) => <code>{e.device_id}</code> },
   {
     key: 'timestamp',
-    label: 'Timestamp',
+    label: 'Timestamp (UTC)',
     sortable: true,
     render: (e) => (
       <>

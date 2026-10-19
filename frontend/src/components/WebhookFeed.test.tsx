@@ -47,6 +47,7 @@ describe('Live webhook feed', () => {
 
     expect(await screen.findByText('Rejected: Signature does not match')).toBeInTheDocument()
     expect(screen.getByText('evt_1')).toBeInTheDocument()
+    expect(screen.getAllByText('22:40:00')).toHaveLength(2) // UTC, like the event tables
     expect(api.apiGet).toHaveBeenCalledWith('/webhook_calls?after=0&limit=25')
 
     const row = screen.getByText('evt_1').closest('button')!

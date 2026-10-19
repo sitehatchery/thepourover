@@ -35,7 +35,7 @@ const COLUMNS: Column<WebEventRow>[] = [
   { key: 'page', label: 'Page', sortable: true, render: (e) => e.page },
   {
     key: 'timestamp',
-    label: 'Timestamp',
+    label: 'Timestamp (UTC)',
     sortable: true,
     render: (e) => (
       <>
