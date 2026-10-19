@@ -65,7 +65,7 @@ flowchart LR
 
 - **Back end:** Python 3.12, FastAPI, SQLAlchemy 2 (one set of models for the API, migrations and admin), Alembic, SQLite with WAL.
 - **Front end:** React 19 + TypeScript, built with Vite. List state (filters, sort, page) lives in the URL, so views can be bookmarked and shared.
-- **Flow:** an import validates every row, de-duplicates and links, then replaces the data in one transaction. The API reads SQLite directly; segments are evaluated live, so a webhook event can change a segment straight away. Nothing is cached or precomputed.
+- **Flow:** an import validates every row, de-duplicates and links, then replaces the CSV data in one transaction. App events from the webhook are kept across imports. The API reads SQLite directly; segments are evaluated live, so a webhook event can change a segment straight away. Nothing is cached or precomputed.
 - **Production:** one Docker image. A Node stage builds the React app; the runtime runs uvicorn behind Nginx under `tini`. Nginx serves the build, proxies `/app` and `/webhooks`, and sets HSTS, CSP and the other security headers.
 
 ```
@@ -136,7 +136,7 @@ One rule, in [`backend/app/rules.py`](backend/app/rules.py): trim and lowercase 
 
 ### Subscriber de-duplication
 
-Rows are grouped by normalized email. The kept row is the one with the latest `last_open_date`, then the latest `signup_date`, then the later row in the file. Blank fields on the kept row are filled from the others. In the sample, all 85 duplicates differ only by email case or whitespace.
+Rows are grouped by normalized email. The kept row is the one with the latest `last_open_date`, then the latest `signup_date`, then the later row in the file. Blank fields on the kept row are filled from the others. Status is the exception: if any row for an email says `unsubscribed`, the subscriber stays unsubscribed, because an opt-out must never be undone by a more recent duplicate. In the sample, all 85 duplicates differ only by email case or whitespace, and none disagree on status.
 
 ### Linking
 
@@ -148,6 +148,10 @@ Rows are grouped by normalized email. The kept row is the one with the latest `l
 ### Rejected rows
 
 Blank rows, invalid emails and unreadable required dates are skipped and listed in a downloadable error report (row number, column, reason). Good rows still load. Fixable values (case, whitespace, alias spellings) are fixed and counted.
+
+### Importing again
+
+Subscribers and web events exist only in the CSVs, so each import replaces them. App events exist only because the webhook delivered them, so imports never touch them. App users are merged: a user in the file is added or updated in place (which completes a webhook placeholder), and a user missing from the file is deleted only if it has no app events; otherwise it stays as a placeholder. Everything is then relinked by email. Editing an email in the admin console relinks the same way.
 
 | File | Read | Loaded | Fixed | Rejected | Duplicates merged |
 |---|---|---|---|---|---|
@@ -163,6 +167,7 @@ Blank rows, invalid emails and unreadable required dates are skipped and listed 
 - **A reinstalled app** gets a new `device_id`, so anonymous events from before the reinstall never attach.
 - **Typos in emails** (`gmial.com`) are valid addresses and aren't corrected.
 - **Merging two subscribers** through the admin console isn't supported; a corrected email that collides with another subscriber is refused.
+- **Column lengths** (64 characters for emails, 24 for source names) aren't enforced by SQLite. On Postgres, longer values would be rejected, and source names sharing their first 24 characters would collide.
 
 ## App events webhook
 
@@ -197,12 +202,15 @@ The in-app API guide has the same example in Node.
 
 How events are handled:
 
-- **Duplicates:** `event_id` is the primary key. A repeat returns 200 with `"status": "duplicate"` and changes nothing, so senders can retry safely.
+- **Duplicates:** `event_id` is the primary key. A repeat returns 200 with `"status": "duplicate"` and changes nothing, so senders can retry safely. A repeated `event_id` with a *different* body is also treated as a duplicate: the first version wins.
 - **Out of order:** events are stored with their own timestamp (plus `received_at`), and every read sorts by event time.
 - **Login stitching:** an anonymous event belongs to the *next* identified event from the same device. When an event with a `user_id` arrives, the device's anonymous events since its previous identified event are attached to that user. An anonymous event that arrives late takes the user of the device's next identified event. An anonymous event *after* a login stays anonymous: the brief says `user_id` is present on every event after login, so a null means the device logged out.
-- **Unknown `user_id`:** never dropped. A placeholder app user is created so the person shows up in lookup and segments, and a later import that includes the user completes it.
+- **Unknown `user_id`:** never dropped. A placeholder app user is created so the person shows up in lookup and segments, and a later import that includes the user completes it. Two first events for the same new user arriving at once are handled (a database savepoint), not a 500.
 - **No restart needed:** events are written straight to the database every page and segment reads.
 - **Visibility:** the response lists each processing step. Every call, including rejected ones, is logged and shown in the live feed on the App Events page. Rejected calls keep only the reason, never the payload.
+- **Testing from the app:** signed-in users can send events from the App Events page, which signs them on the server. That's deliberate for demos; in production it would be limited to a test role.
+
+Stitching limits: timestamps come from the sender and are trusted (naive ones are read as UTC). Two events with the same timestamp on one device are ordered arbitrarily. Once an anonymous event is attached to a user it isn't flagged as stitched, so a late identified event for a *different* user on that device won't reclaim it.
 
 ## Segments
 
@@ -231,7 +239,10 @@ The Assistant page answers plain-English questions ("How many Instagram signups 
 2. **Lists stay in the browser.** `list_people` gives the model a result id and a count. The browser fetches the actual people from `GET /app/assistant/results/{id}`, behind login, and that response never goes back to the model.
 3. **The question is redacted** before sending: emails and ids (`u_…`, `v_…`, `d_…`, `evt_…`, `s_…`) are removed.
 4. **A guard checks every outbound payload** (`assistant/pii.py`). If anything looks like an email or one of our ids, the request is blocked, and a tool result like that is withheld. A bug in layer 1 fails closed instead of leaking.
-5. **Transparency:** every answer has a "What the AI saw" panel with the exact messages sent and every tool result.
+5. **The model's output is checked too.** Tool arguments it writes are rejected before anything runs if they look like an email or an id, and its messages are redacted before they're stored, echoed back or shown.
+6. **Transparency:** every answer has a "What the AI saw" panel with the exact messages sent and every tool result.
+
+**What the guard can't catch:** it matches patterns, so it can't recognize a name, or an email typed in disguise ("jane at gmail dot com") in the question. The data has no name fields, but the schema does pass along category values taken from the CSVs (source names and page paths); free text in those columns would reach the model unless it looks like an email or an id.
 
 Definitions the assistant uses (each report carries its definition, and the model is told to quote it rather than invent one): "went cold" = active, no open in 30 days (including never), signed up more than 30 days ago. "Engaged" = the Engaged readers segment (opened within 14 days and seen within 30). "Last month" = the calendar month before the configured today (August 2026).
 
@@ -239,16 +250,17 @@ Definitions the assistant uses (each report carries its definition, and the mode
 
 - **Sign-in:** UI users get a 15-minute JWT access token, kept in memory, and a single-use refresh token in an httpOnly, SameSite=Strict cookie scoped to `/app/auth`. Reusing an old refresh token revokes the whole chain. Passwords are hashed with Argon2id; unknown usernames take as long as wrong passwords; login is rate limited.
 - **API keys** (`cdp_…`) for other systems are stored as SHA-256 hashes, shown once, and can be rotated (24-hour overlap) or revoked from the admin console or the CLI.
-- **Admin console:** admins only, with its own SameSite=Strict, Secure cookie scoped to `/app/admin` and an 8-hour limit. Admin status is re-checked on every request, and changes are audit-logged without field values.
+- **Admin console:** admins only, with its own SameSite=Strict, Secure cookie scoped to `/app/admin` and an 8-hour limit. Admin status is re-checked on every request, and changes are audit-logged without field values. Its session key is derived from `CDP_JWT_SECRET`; if that were ever missing, a random per-process key is used instead, so a session can't be forged.
 - **Webhook:** HMAC signatures with replay protection, secret rotation, a 16 KB body limit, strict payload validation (unknown fields and bad ids are rejected) and rate limiting.
 - **Secrets** come from environment variables only. `.env` is git-ignored. Production secrets were generated and set on Railway without being printed. Google tokens are encrypted at rest.
 - **Headers:** HSTS, a strict CSP per area (the API answers with `default-src 'none'`), `X-Frame-Options: DENY`, `nosniff`, a referrer policy and a permissions policy.
+- **Client addresses:** only Nginx is trusted to forward them, and the address is read from the end of `X-Forwarded-For` that the platform's proxy writes, so a caller can't choose an address to dodge the rate limits.
 - **Logs:** one line per request with the route template, status, timing and request id. Query strings and raw paths are never logged, since searches carry emails; Nginx logs `$uri` only. Unhandled errors log stack frames without the exception message (SQL errors quote parameters).
 - **CSV exports** escape cells that start with `=`, `+`, `-` or `@` (formula injection).
 
-**Known limitations:** rate limits are in memory (fine for one process; several would need Redis). SQLite means one writer, which suits this size. There's no CSP nonce: the admin pages need `'unsafe-inline'`. Nginx's *error* log can still quote a request line when the upstream fails.
+**Known limitations:** there are no roles: every signed-in user and every API key can read and export all personal data, run an import, and manage Drive and segments (admin-only is limited to the admin console). Assistant result sets are held in memory and readable by any signed-in user with the id. Rate limits are in memory (fine for one process; several would need Redis). SQLite means one writer, which suits this size. There's no CSP nonce: the admin pages need `'unsafe-inline'`. Nginx's *error* log can still quote a request line when the upstream fails.
 
-**Next security improvement:** move the API docs and admin console behind the same single sign-on and add multi-factor authentication for admins, then put rate limits in a shared store so they hold across instances.
+**Next security improvement:** roles. Most of the Growth team would work with segments and counts, and only a few people could see or export emails, with every export logged. API keys would get scopes (read-only, webhook-only), admins would need multi-factor sign-in, and the rate limits would move to a shared store so they hold across instances.
 
 ## Design decisions beyond the brief
 
